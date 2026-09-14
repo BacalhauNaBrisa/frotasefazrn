@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gerenciamento de Frota — Sefaz/RN</title>
+<meta name="description" content="Sistema não-oficial de agendamento e acompanhamento em tempo real da frota de veículos da SUMAT/Sefaz-RN"/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<style>
+:root{
+	--navy-950:#0c1f36;
+	--navy-900:#132c4a;
+	--navy-800:#1b3a63;
+	--navy-700:#274b7d;
+	--green-600:#2e7d4f;
+	--green-700:#256640;
+	--gold-500:#f0b93b;
+	--gold-600:#d99e20;
+	--cream-50:#faf8f3;
+	--cream-100:#f2eee2;
+	--ink-900:#16202c;
+	--ink-600:#4b5768;
+	--ink-400:#79879a;
+	--line:#dcd6c6;
+	--ok-bg:#e9f3ec;
+	--danger:#b3432b;
+	--danger-bg:#fbeae5;
+	--radius:10px;
+	--shadow: 0 1px 2px rgba(15,30,50,.06), 0 8px 24px -12px rgba(15,30,50,.18);
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+.hidden{display:none !important;}
+body{
+	margin:0;
+	background:var(--cream-50);
+	color:var(--ink-900);
+	font-family:'Inter',system-ui,sans-serif;
+	font-size:15px;
+	line-height:1.5;
+}
+.num{font-family:'JetBrains Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+h1,h2,h3{font-family:'Space Grotesk',system-ui,sans-serif; color:var(--navy-950); margin:0 0 .4em;}
+a{color:var(--navy-700);}
+
+/* ---------- header ---------- */
+.topbar{
+	background: linear-gradient(180deg,var(--navy-950),var(--navy-900) 75%);
+	color:#f4f1e6;
+	border-bottom:4px solid var(--gold-500);
+}
+.topbar-inner{
+	max-width:1320px;
+	margin:0 auto;
+	padding:26px 24px 22px;
+	display:flex;
+	align-items:center;
+	gap:22px;
+}
+.topbar img{
+	height:96px;
+	width:auto;
+	filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));
+	flex-shrink:0;
+}
+.topbar .eyebrow{
+	text-transform:uppercase;
+	letter-spacing:.14em;
+	font-size:11.5px;
+	font-weight:600;
+	color:var(--gold-500);
+	margin-bottom:6px;
+}
+.topbar h1{
+	color:#fbf9f2;
+	font-size:26px;
+	margin:0 0 4px;
+	line-height:1.2;
+}
+.topbar p{
+	margin:0;
+	color:#c7cfdb;
+	font-size:13.5px;
+	max-width:72ch;
+}
+
+/* ---------- layout ---------- */
+.wrap{
+	max-width:1320px;
+	margin:0 auto;
+	padding:28px 24px 80px;
+}
+.card{
+	background:#fff;
+	border:1px solid var(--line);
+	border-radius:var(--radius);
+	box-shadow:var(--shadow);
+	padding:22px 24px;
+	margin-bottom:20px;
+}
+.card > h2{
+	font-size:16.5px;
+	display:flex;
+	align-items:baseline;
+	gap:8px;
+	border-bottom:1px solid var(--cream-100);
+	padding-bottom:12px;
+	margin-bottom:18px;
+}
+.card > h2 .tag{
+	font-family:'JetBrains Mono',monospace;
+	font-size:11px;
+	font-weight:600;
+	color:var(--green-700);
+	background:var(--ok-bg);
+	border-radius:5px;
+	padding:2px 7px;
+	letter-spacing:.03em;
+}
+.card > p.lead{
+	font-size:13.5px;
+	color:var(--ink-600);
+	margin:-6px 0 16px;
+	line-height:1.55;
+}
+
+/* ---------- status line / sync badge ---------- */
+.status-line{
+	display:flex;
+	gap:14px;
+	flex-wrap:wrap;
+	align-items:center;
+	margin-bottom:16px;
+	font-size:13px;
+	color:var(--ink-600);
+}
+.status-line b{color:var(--navy-950); font-family:'JetBrains Mono',monospace;}
+.sync-badge{
+	display:inline-flex;
+	align-items:center;
+	gap:6px;
+	font-size:11.5px;
+	font-weight:700;
+	padding:5px 11px;
+	border-radius:999px;
+	letter-spacing:.02em;
+}
+.sync-badge::before{
+	content:"";
+	width:7px; height:7px;
+	border-radius:50%;
+	flex-shrink:0;
+}
+.sync-badge.sync-live{background:var(--ok-bg); color:var(--green-700); border:1px solid #cfe3d6;}
+.sync-badge.sync-live::before{background:var(--green-600);}
+.sync-badge.sync-local{background:#fdf2df; color:var(--gold-600); border:1px solid #f0ddb0;}
+.sync-badge.sync-local::before{background:var(--gold-600);}
+.sync-badge.sync-error{background:var(--danger-bg); color:var(--danger); border:1px solid #f0c3b5;}
+.sync-badge.sync-error::before{background:var(--danger);}
+.sync-warning{
+	font-size:12px;
+	color:var(--gold-600);
+	background:#fdf2df;
+	border-left:3px solid var(--gold-500);
+	padding:9px 12px;
+	border-radius:4px;
+	margin-bottom:16px;
+	line-height:1.5;
+}
+
+/* ---------- formulário de agendamento ---------- */
+.form-grid{
+	display:grid;
+	grid-template-columns:repeat(4, 1fr);
+	gap:14px 16px;
+	margin-bottom:6px;
+}
+@media (max-width:980px){.form-grid{grid-template-columns:repeat(2, 1fr);}}
+@media (max-width:560px){.form-grid{grid-template-columns:1fr;}}
+.field label{
+	display:block;
+	font-size:10.5px;
+	text-transform:uppercase;
+	letter-spacing:.04em;
+	color:var(--ink-400);
+	font-weight:600;
+	margin-bottom:5px;
+}
+.field input, .field select{
+	width:100%;
+	font:inherit;
+	font-size:13.5px;
+	padding:9px 10px;
+	border:1.5px solid var(--line);
+	border-radius:6px;
+	background:#fff;
+	color:var(--ink-900);
+	transition:border-color .15s;
+}
+.field input:focus, .field select:focus{
+	outline:none;
+	border-color:var(--navy-700);
+	box-shadow:0 0 0 3px rgba(39,75,125,.15);
+}
+.field input.invalid{border-color:var(--danger);}
+.field .field-msg{
+	font-size:11px;
+	color:var(--danger);
+	margin-top:4px;
+	min-height:14px;
+}
+.field .field-msg.ok{color:var(--green-700);}
+
+.form-actions{
+	display:flex;
+	align-items:center;
+	gap:14px;
+	margin-top:8px;
+	flex-wrap:wrap;
+}
+.btn-primary{
+	display:inline-flex;
+	align-items:center;
+	gap:8px;
+	font:inherit;
+	font-size:13.5px;
+	font-weight:700;
+	color:#fff;
+	background:var(--navy-900);
+	border:1.5px solid var(--navy-900);
+	border-radius:8px;
+	padding:11px 18px;
+	cursor:pointer;
+	transition:background .15s, opacity .15s;
+}
+.btn-primary:hover:not(:disabled){background:var(--navy-800);}
+.btn-primary:active:not(:disabled){background:var(--navy-950);}
+.btn-primary:disabled{
+	opacity:.45;
+	cursor:not-allowed;
+}
+.form-alert{
+	font-size:13px;
+	padding:10px 13px;
+	border-radius:6px;
+	line-height:1.5;
+	margin-top:4px;
+}
+.form-alert.error{color:var(--danger); background:var(--danger-bg); border-left:3px solid var(--danger);}
+.form-alert.success{color:var(--green-700); background:var(--ok-bg); border-left:3px solid var(--green-600);}
+
+/* ---------- tabela de veículos disponíveis ---------- */
+.avail-wrap{margin-top:18px;}
+.avail-wrap h3{font-size:13.5px; margin-bottom:10px;}
+table.avail{
+	width:100%;
+	border-collapse:collapse;
+	font-size:13px;
+}
+table.avail th, table.avail td{
+	padding:9px 10px;
+	border-bottom:1px solid var(--cream-100);
+	text-align:left;
+}
+table.avail th{
+	font-size:10.5px;
+	text-transform:uppercase;
+	letter-spacing:.05em;
+	color:var(--ink-400);
+	font-weight:600;
+	background:var(--cream-100);
+}
+table.avail tbody tr:hover td{background:var(--cream-100);}
+.btn-reservar{
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	width:32px;
+	height:32px;
+	border-radius:50%;
+	border:1.5px solid var(--green-600);
+	background:var(--ok-bg);
+	color:var(--green-700);
+	cursor:pointer;
+	transition:background .15s;
+}
+.btn-reservar:hover{background:#d9ecdf;}
+.btn-reservar:disabled{opacity:.4; cursor:not-allowed;}
+.empty-note{
+	font-size:12.5px;
+	color:var(--ink-400);
+	font-style:italic;
+	padding:14px 4px;
+}
+
+/* ---------- dashboard "frota de veículos" ---------- */
+.frota-toolbar{
+	display:flex;
+	justify-content:space-between;
+	align-items:center;
+	gap:12px;
+	flex-wrap:wrap;
+	margin-bottom:12px;
+}
+.frota-refresh-note{font-size:11.5px; color:var(--ink-400);}
+.frota-wrap{
+	overflow:auto;
+	border:1px solid var(--line);
+	border-radius:var(--radius);
+	max-height:74vh;
+}
+table.frota{
+	border-collapse:separate;
+	border-spacing:0;
+	width:100%;
+	min-width:1440px;
+	font-size:12.5px;
+}
+table.frota thead th{
+	position:sticky;
+	top:0;
+	z-index:3;
+	background:var(--cream-100);
+	color:var(--ink-600);
+	font-size:10.5px;
+	text-transform:uppercase;
+	letter-spacing:.05em;
+	font-weight:700;
+	padding:9px 8px 4px;
+	text-align:left;
+	border-bottom:1px solid var(--line);
+	white-space:nowrap;
+	cursor:pointer;
+	user-select:none;
+}
+table.frota thead th .arrow{font-size:9px; color:var(--ink-400); margin-left:3px;}
+table.frota thead tr.filter-row th{
+	position:sticky;
+	top:29px;
+	z-index:3;
+	background:var(--cream-100);
+	padding:5px 8px 9px;
+	border-bottom:2px solid var(--line);
+	cursor:default;
+}
+table.frota thead tr.filter-row input, table.frota thead tr.filter-row select{
+	width:100%;
+	font:inherit;
+	font-size:11.5px;
+	padding:5px 6px;
+	border:1px solid var(--line);
+	border-radius:5px;
+	background:#fff;
+	color:var(--ink-900);
+}
+table.frota td{
+	padding:7px 8px;
+	border-bottom:1px solid var(--cream-100);
+	vertical-align:middle;
+	white-space:nowrap;
+}
+table.frota tbody tr.row-uso td{background:var(--danger-bg);}
+table.frota tbody tr.row-uso:hover td{background:#f5d9d0;}
+table.frota tbody tr.row-disponivel td{background:var(--ok-bg);}
+table.frota tbody tr.row-disponivel:hover td{background:#d9ecdf;}
+.status-pill{
+	display:inline-block;
+	font-size:10.5px;
+	font-weight:700;
+	letter-spacing:.03em;
+	padding:2px 8px;
+	border-radius:999px;
+}
+.status-pill.uso{background:var(--danger); color:#fff;}
+.status-pill.disponivel{background:var(--green-600); color:#fff;}
+
+.citation{
+	font-size:12px;
+	color:var(--ink-600);
+	background:var(--cream-100);
+	border-left:3px solid var(--gold-500);
+	padding:9px 12px;
+	border-radius:4px;
+	margin-top:14px;
+	line-height:1.5;
+}
+
+footer{
+	max-width:1320px;
+	margin:0 auto;
+	padding:0 24px 40px;
+	color:var(--ink-400);
+	font-size:12px;
+	line-height:1.6;
+}
+footer a{color:var(--ink-600);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+	<div class="topbar-inner">
+		<img src="https://raw.githubusercontent.com/BacalhauNaBrisa/remunerasefazrn/main/afrelefante.png" alt="Mascote AFRE Sefaz/RN"/>
+		<div>
+			<div class="eyebrow">Sistema não-oficial</div>
+			<h1>Gerenciamento de Frota — Sefaz/RN</h1>
+			<p>Agendamento de retirada/devolução e acompanhamento em tempo real da frota de veículos administrada pela SUMAT (Subcoordenadoria de Fiscalização de Mercadorias em Trânsito) da Secretaria da Fazenda do Rio Grande do Norte.</p>
+		</div>
+	</div>
+</div>
+
+<div class="wrap">
+
+	<div class="card">
+		<h2>Agendamento <span class="tag">reserva de viatura</span></h2>
+		<p class="lead">Preencha os dados da retirada e da devolução para verificar quais viaturas estão disponíveis no local escolhido. Os horários seguem o fuso de Recife (UTC−3) e devem estar no futuro em relação ao momento atual.</p>
+
+		<div id="avisoLocalAgendamento" class="sync-warning hidden">⚠️ A sincronização em tempo real com o Firebase não está configurada (ou não foi possível conectar). As reservas estão sendo salvas apenas neste navegador. Veja o <code>README.md</code> do repositório para configurar a sincronização entre todos os usuários.</div>
+
+		<div class="status-line">
+			<span id="syncBadge" class="sync-badge sync-local">Conectando…</span>
+			<span>Agora (Recife): <b id="relogioAgora" class="num">—</b></span>
+		</div>
+
+		<div class="form-grid">
+			<div class="field">
+				<label for="inpDataRetirada">Data de retirada</label>
+				<input type="date" id="inpDataRetirada"/>
+			</div>
+			<div class="field">
+				<label for="inpHoraRetirada">Hora de retirada</label>
+				<input type="time" id="inpHoraRetirada" step="60"/>
+			</div>
+			<div class="field">
+				<label for="inpDataDevolucao">Data de devolução</label>
+				<input type="date" id="inpDataDevolucao"/>
+			</div>
+			<div class="field">
+				<label for="inpHoraDevolucao">Hora de devolução</label>
+				<input type="time" id="inpHoraDevolucao" step="60"/>
+			</div>
+
+			<div class="field">
+				<label for="inpMatricula">Matrícula</label>
+				<input type="text" id="inpMatricula" inputmode="numeric" placeholder="256.410-6" maxlength="9"/>
+				<div class="field-msg" id="msgMatricula"></div>
+			</div>
+			<div class="field">
+				<label for="selLocal">Local de retirada</label>
+				<select id="selLocal"><option value="">Selecione…</option></select>
+			</div>
+			<div class="field">
+				<label for="selSetor">Setor solicitante</label>
+				<select id="selSetor"><option value="">Selecione…</option></select>
+			</div>
+			<div class="field">
+				<label for="selFinalidade">Finalidade</label>
+				<select id="selFinalidade"><option value="">Selecione…</option></select>
+			</div>
+		</div>
+
+		<div class="form-actions">
+			<button type="button" class="btn-primary" id="btnVerificar" disabled>Verificar disponibilidade</button>
+		</div>
+		<div id="agendamentoAlert"></div>
+
+		<div class="avail-wrap hidden" id="availWrap">
+			<h3>Viaturas disponíveis</h3>
+			<table class="avail" id="tblAvail">
+				<thead>
+					<tr><th>Veículo</th><th>Placa</th><th>Caracterizada</th><th>Lotado</th><th>Propriedade</th><th>Reservar</th></tr>
+				</thead>
+				<tbody></tbody>
+			</table>
+			<div class="empty-note hidden" id="availEmpty">Nenhuma viatura disponível nesse local para o período selecionado.</div>
+		</div>
+
+		<div class="citation">A disponibilidade é recalculada com base nas reservas já registradas para cada viatura: uma viatura só aparece como disponível se não houver, para o período solicitado, nenhuma outra reserva com horário sobreposto.</div>
+	</div>
+
+	<div class="card">
+		<h2>Frota de veículos <span class="tag">status ao vivo</span></h2>
+		<p class="lead">Situação, em tempo real, de todas as 56 viaturas da frota. Clique no título de uma coluna para ordenar e use os campos abaixo dos títulos para filtrar.</p>
+
+		<div class="frota-toolbar">
+			<span class="frota-refresh-note">Atualizado automaticamente a cada 15 segundos, conforme o horário de Recife.</span>
+		</div>
+
+		<div class="frota-wrap">
+			<table class="frota" id="tblFrota">
+				<thead>
+					<tr id="frotaHeaderRow"></tr>
+					<tr class="filter-row" id="frotaFilterRow"></tr>
+				</thead>
+				<tbody id="frotaBody"></tbody>
+			</table>
+		</div>
+	</div>
+
+</div>
+
+<footer>
+	<p>Sistema independente e não-oficial, sem qualquer vínculo institucional com a Sefaz/RN. Os dados de agendamento aqui registrados têm caráter de apoio operacional interno à SUMAT e não substituem os controles administrativos oficiais. Projetos irmãos: <a href="https://bacalhaunabrisa.github.io/lotacaosefazrn/" target="_blank" rel="noopener">lotacaosefazrn</a> e <a href="https://bacalhaunabrisa.github.io/remunerasefazrn/" target="_blank" rel="noopener">remunerasefazrn</a>.</p>
+</footer>
+
+<script>
+// ======================= DADOS =======================
+
+var LOCAIS = ["Sede Sefaz","NIF","1 URT","2 URT","3 URT","5 URT","6 URT","7 URT"]
+	.sort(function(a,b){ return a.localeCompare(b, 'pt-BR', {numeric:true}); });
+
+var SETORES = ["SUMAT","SUMAT/NIF","SUCADI","SUFISE","SUSCOMEX","COFIS","CACE","SUDEFI","GS",
+	"CENTRAL DE VEÍCULOS","COGEF","COTIC","1 URT","2 URT","3 URT","5 URT","6 URT","7 URT","COEF"]
+	.sort(function(a,b){ return a.localeCompare(b, 'pt-BR', {numeric:true}); });
+
+var FINALIDADES = ["Itinerância","Plantão","Visita Institucional"];
+
+var SERVIDORES = [
+	{ nome:"Alexandre",        matricula:"2564033" },
+	{ nome:"Alinne",           matricula:"2562316" },
+	{ nome:"Amanda Sousa",     matricula:"2564025" },
+	{ nome:"André",            matricula:"2564670" },
+	{ nome:"Thales",           matricula:"2564807" },
+	{ nome:"Arthur",           matricula:"2564475" },
+	{ nome:"Carlos",           matricula:"2563959" },
+	{ nome:"Caroline",         matricula:"2562820" },
+	{ nome:"Daniel",           matricula:"2560330" },
+	{ nome:"Danielle",         matricula:"2564092" },
+	{ nome:"Estevam",          matricula:"2564840" },
+	{ nome:"Fabiano",          matricula:"2564521" },
+	{ nome:"Fellipe",          matricula:"2562448" },
+	{ nome:"Fernando",         matricula:"1945289" },
+	{ nome:"Braga",            matricula:"2562774" },
+	{ nome:"Girlian",          matricula:"2563932" },
+	{ nome:"Gustavo",          matricula:"2564106" },
+	{ nome:"Jean",             matricula:"2564432" },
+	{ nome:"João",             matricula:"2563843" },
+	{ nome:"Jônatas",          matricula:"2564394" },
+	{ nome:"Jorge",            matricula:"2568217" },
+	{ nome:"Francisco",        matricula:"2564459" },
+	{ nome:"Rodolfo",          matricula:"2562987" },
+	{ nome:"Júlio",            matricula:"2562464" },
+	{ nome:"Larissa",          matricula:"2562960" },
+	{ nome:"Leandro",          matricula:"2562235" },
+	{ nome:"Leonardo",         matricula:"2563835" },
+	{ nome:"Lewi",             matricula:"2562855" },
+	{ nome:"Lucas Simões",     matricula:"2562685" },
+	{ nome:"Lucas Nascimento", matricula:"2564084" },
+	{ nome:"Lucas Vidigal",    matricula:"2564009" },
+	{ nome:"Marcelo",          matricula:"2564823" },
+	{ nome:"Marco",            matricula:"2564637" },
+	{ nome:"Marcos",           matricula:"2289709" },
+	{ nome:"Marila",           matricula:"2564297" },
+	{ nome:"Mateus",           matricula:"2562162" },
+	{ nome:"Matheus Welter",   matricula:"2563916" },
+	{ nome:"Matheus Matos",    matricula:"2564017" },
+	{ nome:"Mozart",           matricula:"2562308" },
+	{ nome:"Rafael",           matricula:"2562650" },
+	{ nome:"Roberto",          matricula:"2562324" },
+	{ nome:"Romilson",         matricula:"2564488" },
+	{ nome:"Silvio",           matricula:"2562766" },
+	{ nome:"Tacio",            matricula:"2564440" },
+	{ nome:"Tarcisio",         matricula:"2564041" },
+	{ nome:"Thiago Bastos",    matricula:"2563800" },
+	{ nome:"Thiago Lima",      matricula:"2562278" },
+	{ nome:"Walber",           matricula:"2564424" }
+];
+var SERVIDOR_BY_MAT = {};
+SERVIDORES.forEach(function(s){ SERVIDOR_BY_MAT[s.matricula] = s; });
+
+var VEICULOS = [
+	{ veiculo:"CAMINHÃO",                              placa:"OWC-0742", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
+	{ veiculo:"CAMINHONETE",                           placa:"RQB-1C59", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
+	{ veiculo:"CAMINHONETE",                           placa:"RQB-1C69", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
+	{ veiculo:"CAMINHONETE",                           placa:"RQB-1C78", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
+	{ veiculo:"CRONOS DRIVE 1.3",                      placa:"RPJ-8D82", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
+	{ veiculo:"CROSS SENSE TSI",                       placa:"RGM-7D30", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
+	{ veiculo:"CROSS SENSE TSI",                       placa:"RGM-2J49", caracterizada:"CARACTERIZADA",                        lotado:"NIF",        propriedade:"PRÓPRIA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D01",       placa:"TSR-8G80", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D02",       placa:"TSR-8G50", caracterizada:"DESCARACTERIZADA ADESIVO GOV/RN",      lotado:"NIF",        propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D03",       placa:"TSQ-3H30", caracterizada:"DESCARACTERIZADA ADESIVO GOV/RN",      lotado:"NIF",        propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D04",       placa:"TSQ-3H10", caracterizada:"DESCARACTERIZADA ADESIVO GOV/RN",      lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D05",       placa:"TSV-6G95", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D06",       placa:"TST-7B14", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D07",       placa:"TSV-6H57", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D08",       placa:"TST-6F56", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D09",       placa:"TST-7H39", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D10",       placa:"TST-2I56", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D11",       placa:"TST-2I47", caracterizada:"DESCARACTERIZADA",                     lotado:"6 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D12",       placa:"TST-1H96", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D13",       placa:"TST-2I55", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - PM",        placa:"TST-9D90", caracterizada:"CARACTERIZADA",                        lotado:"NIF",        propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - PM",        placa:"TSW-4E28", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - RESERVA R01", placa:"TSQ-3H40", caracterizada:"CARACTERIZADA",                      lotado:"6 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - RESERVA R02", placa:"TSR-8F80", caracterizada:"CARACTERIZADA",                      lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT001",     placa:"TSR-8E20", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT002",     placa:"TSR-8F20", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT003",     placa:"TSR-8G60", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT004",     placa:"TSR-8H30", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT005",     placa:"TSR-8H40", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT006",     placa:"TSR-8H70", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT007",     placa:"TSS-1A30", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT008",     placa:"TSS-6G30", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT009",     placa:"TSS-6G50", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT010",     placa:"TSS-6G80", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT011",     placa:"TSS-6H20", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT012",     placa:"TSS-0J60", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT013",     placa:"TSR-8H80", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT014",     placa:"TSS-6G70", caracterizada:"CARACTERIZADA",                        lotado:"3 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT015",     placa:"TSR-8D90", caracterizada:"CARACTERIZADA",                        lotado:"NIF",        propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT016",     placa:"TSS-6G60", caracterizada:"CARACTERIZADA",                        lotado:"NIF",        propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT017",     placa:"TSR-8D50", caracterizada:"CARACTERIZADA",                        lotado:"5 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT018",     placa:"TSS-1A70", caracterizada:"CARACTERIZADA",                        lotado:"5 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT019",     placa:"TSR-8C90", caracterizada:"CARACTERIZADA",                        lotado:"2 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT020",     placa:"TSR-8H10", caracterizada:"CARACTERIZADA",                        lotado:"3 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT021",     placa:"TSR-8D20", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT022",     placa:"TSR-8E70", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT023",     placa:"TSR-8G20", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT024",     placa:"TSS-1A50", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT025",     placa:"TSS-6G40", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"ALUGADA" },
+	{ veiculo:"LOGAN",                                 placa:"OWA-8492", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
+	{ veiculo:"LOGAN",                                 placa:"OWA-8232", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
+	{ veiculo:"MERCEDES VAN",                          placa:"REQ-3I21", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"PRÓPRIA" },
+	{ veiculo:"MERCEDES VAN",                          placa:"REQ-3I22", caracterizada:"CARACTERIZADA",                        lotado:"3 URT",      propriedade:"PRÓPRIA" },
+	{ veiculo:"MERCEDES VAN",                          placa:"REQ-3I24", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
+	{ veiculo:"SPIN",                                  placa:"OWD-5079", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
+	{ veiculo:"SPIN",                                  placa:"OVZ-3756", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" }
+];
+var VEICULO_BY_PLACA = {};
+VEICULOS.forEach(function(v){ VEICULO_BY_PLACA[v.placa] = v; });
+
+var CARACTERIZADAS_DISTINTAS = Array.from(new Set(VEICULOS.map(function(v){ return v.caracterizada; })))
+	.sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
+var PROPRIEDADES_DISTINTAS = Array.from(new Set(VEICULOS.map(function(v){ return v.propriedade; })))
+	.sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
+
+// ======================= FIREBASE (SINCRONIZAÇÃO ENTRE TODOS OS USUÁRIOS) =======================
+//
+// Para que as reservas feitas por qualquer servidor apareçam para todos os demais em
+// tempo real, este sistema usa o Firebase Realtime Database, um banco de dados
+// gratuito do Google. COMO HABILITAR: crie um projeto gratuito em
+// https://console.firebase.google.com/, ative o "Realtime Database" e substitua os
+// valores de exemplo abaixo pela configuração ("firebaseConfig") do SEU projeto. O
+// passo a passo completo está no README.md do repositório. Enquanto os valores de
+// exemplo não forem substituídos, o sistema continua funcionando normalmente, mas
+// salvando as reservas apenas no navegador de cada pessoa (modo local), com um aviso
+// visível na página.
+
+var FIREBASE_CONFIG = {
+	apiKey: "AIzaSyA2rbUa7NdXo6H-TSYWyD8Esauct7Bigik",
+	authDomain: "frotasefazrn.firebaseapp.com",
+	databaseURL: "https://frotasefazrn-default-rtdb.firebaseio.com",
+	projectId: "frotasefazrn",
+	storageBucket: "frotasefazrn.firebasestorage.app",
+	messagingSenderId: "318943696552",
+	appId: "1:318943696552:web:c202024a5d6da66cfcd49d"
+};
+
+var FIREBASE_PATH = 'reservas'; // não altere: caminho usado dentro do banco de dados
+var STORAGE_KEY = 'frotasefazrn_v1';
+
+var firebaseAtivo = false;
+var db = null;
+var reservas = {}; // pushId -> reserva
+
+function configuracaoFirebaseValida() {
+	return !!(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.databaseURL &&
+		FIREBASE_CONFIG.apiKey.indexOf('SUA_API_KEY_AQUI') === -1 &&
+		FIREBASE_CONFIG.databaseURL.indexOf('SEU_PROJETO') === -1);
+}
+
+function setSyncBadge(modo) {
+	var $badge = $('#syncBadge');
+	$badge.removeClass('sync-live sync-local sync-error');
+	if (modo === 'live') {
+		$badge.addClass('sync-live').text('Sincronizado com todos os usuários');
+		$('#avisoLocalAgendamento').addClass('hidden');
+	} else if (modo === 'error') {
+		$badge.addClass('sync-error').text('Falha na sincronização — modo local');
+		$('#avisoLocalAgendamento').removeClass('hidden');
+	} else {
+		$badge.addClass('sync-local').text('Modo local (não sincronizado)');
+		$('#avisoLocalAgendamento').removeClass('hidden');
+	}
+}
+
+function iniciarSincronizacao() {
+	if (!configuracaoFirebaseValida() || typeof firebase === 'undefined') {
+		firebaseAtivo = false;
+		setSyncBadge('local');
+		loadStateLocal();
+		renderFrota();
+		return;
+	}
+
+	try {
+		firebase.initializeApp(FIREBASE_CONFIG);
+		db = firebase.database();
+	} catch (e) {
+		console.warn('Não foi possível iniciar o Firebase; operando em modo local.', e);
+		firebaseAtivo = false;
+		setSyncBadge('error');
+		loadStateLocal();
+		renderFrota();
+		return;
+	}
+
+	db.ref(FIREBASE_PATH).on('value', function(snapshot) {
+		firebaseAtivo = true;
+		setSyncBadge('live');
+		reservas = snapshot.val() || {};
+		renderFrota();
+		if (!$('#availWrap').hasClass('hidden')) verificarDisponibilidade(false);
+	}, function(erro) {
+		console.error('Erro de sincronização com o Firebase:', erro);
+		firebaseAtivo = false;
+		setSyncBadge('error');
+		loadStateLocal();
+		renderFrota();
+	});
+}
+
+function gravarReserva(reserva, callback) {
+	if (firebaseAtivo && db) {
+		var novaRef = db.ref(FIREBASE_PATH).push();
+		novaRef.set(reserva, function(erro) {
+			callback(!erro);
+		});
+	} else {
+		var id = 'local_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+		reservas[id] = reserva;
+		saveStateLocal();
+		renderFrota();
+		callback(true);
+	}
+}
+
+function loadStateLocal() {
+	var raw;
+	try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { return; }
+	if (!raw) return;
+	try { reservas = JSON.parse(raw) || {}; } catch (e) { reservas = {}; }
+}
+
+function saveStateLocal() {
+	try { localStorage.setItem(STORAGE_KEY, JSON.stringify(reservas)); }
+	catch (e) { console.warn('Não foi possível salvar a reserva neste navegador.', e); }
+}
+
+// ======================= HELPERS DE DATA/HORA (fuso de Recife, UTC-3 fixo) =======================
+
+function hojeRecifeISO() {
+	// aaaa-mm-dd correspondente ao dia atual no fuso de Recife, independente do
+	// fuso horário do dispositivo de quem está usando o navegador.
+	var partes = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date());
+	var obj = {};
+	partes.forEach(function(p){ obj[p.type] = p.value; });
+	return obj.year + '-' + obj.month + '-' + obj.day;
+}
+
+function parseDataHoraRecife(dataStr, horaStr) {
+	if (!dataStr || !horaStr) return null;
+	// -03:00 é o deslocamento fixo do horário de Recife (Brasil não usa mais horário de verão).
+	var d = new Date(dataStr + 'T' + horaStr + ':00-03:00');
+	return isNaN(d.getTime()) ? null : d;
+}
+
+function formatDataHoraRecife(date) {
+	if (!date) return '-';
+	return new Intl.DateTimeFormat('pt-BR', {
+		timeZone: 'America/Recife', day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'
+	}).format(date);
+}
+
+function overlap(aStart, aEnd, bStart, bEnd) {
+	return aStart < bEnd && bStart < aEnd;
+}
+
+// ======================= FORMULÁRIO DE AGENDAMENTO =======================
+
+function popularDropdowns() {
+	var $local = $('#selLocal');
+	LOCAIS.forEach(function(l){ $local.append('<option value="' + l + '">' + l + '</option>'); });
+
+	var $setor = $('#selSetor');
+	SETORES.forEach(function(s){ $setor.append('<option value="' + s + '">' + s + '</option>'); });
+
+	var $fin = $('#selFinalidade');
+	FINALIDADES.forEach(function(f){ $fin.append('<option value="' + f + '">' + f + '</option>'); });
+
+	var hoje = hojeRecifeISO();
+	$('#inpDataRetirada, #inpDataDevolucao').attr('min', hoje);
+}
+
+function formatarMatriculaInput() {
+	var digitos = $('#inpMatricula').val().replace(/\D/g, '').slice(0, 7);
+	var formatado = digitos;
+	if (digitos.length === 7) {
+		formatado = digitos.slice(0,3) + '.' + digitos.slice(3,6) + '-' + digitos.slice(6);
+	}
+	$('#inpMatricula').val(formatado);
+
+	var $msg = $('#msgMatricula');
+	if (digitos.length === 0) {
+		$('#inpMatricula').removeClass('invalid');
+		$msg.text('').removeClass('ok');
+	} else if (digitos.length < 7) {
+		$('#inpMatricula').removeClass('invalid');
+		$msg.text('Continue digitando os 7 dígitos da matrícula.').removeClass('ok');
+	} else if (SERVIDOR_BY_MAT[digitos]) {
+		$('#inpMatricula').removeClass('invalid');
+		$msg.text('Servidor: ' + SERVIDOR_BY_MAT[digitos].nome).addClass('ok');
+	} else {
+		$('#inpMatricula').addClass('invalid');
+		$msg.text('Matrícula inválida: não consta na listagem de servidores.').removeClass('ok');
+	}
+}
+
+function matriculaAtualValida() {
+	var digitos = $('#inpMatricula').val().replace(/\D/g, '');
+	return digitos.length === 7 && !!SERVIDOR_BY_MAT[digitos];
+}
+
+function atualizarEstadoBotao() {
+	var pronto = !!$('#inpDataRetirada').val() && !!$('#inpHoraRetirada').val() &&
+		!!$('#inpDataDevolucao').val() && !!$('#inpHoraDevolucao').val() &&
+		matriculaAtualValida() && !!$('#selLocal').val() && !!$('#selSetor').val() && !!$('#selFinalidade').val();
+	$('#btnVerificar').prop('disabled', !pronto);
+}
+
+function mostrarAlertaAgendamento(tipo, texto) {
+	$('#agendamentoAlert').html('<div class="form-alert ' + tipo + '">' + texto + '</div>');
+}
+
+function limparAlertaAgendamento() {
+	$('#agendamentoAlert').empty();
+}
+
+function verificarDisponibilidade(mostrarErrosDeData) {
+	if (mostrarErrosDeData === undefined) mostrarErrosDeData = true;
+
+	var retirada = parseDataHoraRecife($('#inpDataRetirada').val(), $('#inpHoraRetirada').val());
+	var devolucao = parseDataHoraRecife($('#inpDataDevolucao').val(), $('#inpHoraDevolucao').val());
+	var local = $('#selLocal').val();
+
+	if (!retirada || !devolucao || !local) return;
+
+	var agora = new Date();
+	if (mostrarErrosDeData && retirada.getTime() <= agora.getTime()) {
+		mostrarAlertaAgendamento('error', 'A data/hora de retirada precisa estar no futuro em relação ao horário atual de Recife.');
+		$('#availWrap').addClass('hidden');
+		return;
+	}
+	if (mostrarErrosDeData && devolucao.getTime() < retirada.getTime()) {
+		mostrarAlertaAgendamento('error', 'A data/hora de devolução não pode ser anterior à data/hora de retirada.');
+		$('#availWrap').addClass('hidden');
+		return;
+	}
+	limparAlertaAgendamento();
+
+	var candidatos = VEICULOS.filter(function(v){ return v.lotado === local; });
+
+	var listaReservas = Object.keys(reservas).map(function(id){
+		var r = reservas[id];
+		return { id:id, placa:r.placa, retirada:new Date(r.retirada), devolucao:new Date(r.devolucao) };
+	});
+
+	var disponiveis = candidatos.filter(function(v){
+		return !listaReservas.some(function(r){
+			return r.placa === v.placa && overlap(retirada, devolucao, r.retirada, r.devolucao);
+		});
+	});
+
+	renderDisponiveis(disponiveis, retirada, devolucao, local);
+}
+
+function renderDisponiveis(disponiveis, retirada, devolucao, local) {
+	$('#availWrap').removeClass('hidden');
+	var $tbody = $('#tblAvail tbody').empty();
+
+	if (!disponiveis.length) {
+		$('#availEmpty').removeClass('hidden');
+		return;
+	}
+	$('#availEmpty').addClass('hidden');
+
+	disponiveis.forEach(function(v){
+		var $row = $('<tr>').attr('data-placa', v.placa);
+		$row.append('<td>' + v.veiculo + '</td>');
+		$row.append('<td class="num">' + v.placa + '</td>');
+		$row.append('<td>' + v.caracterizada + '</td>');
+		$row.append('<td>' + v.lotado + '</td>');
+		$row.append('<td>' + v.propriedade + '</td>');
+		var $btn = $('<button type="button" class="btn-reservar" title="Reservar esta viatura">' +
+			'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>');
+		$row.append($('<td>').append($btn));
+		$tbody.append($row);
+	});
+
+	$tbody.off('click', '.btn-reservar').on('click', '.btn-reservar', function(){
+		var placa = $(this).closest('tr').data('placa');
+		reservarViatura(placa, retirada, devolucao, local);
+	});
+}
+
+function reservarViatura(placa, retirada, devolucao, local) {
+	var agora = new Date();
+	if (retirada.getTime() <= agora.getTime()) {
+		mostrarAlertaAgendamento('error', 'Não foi possível concluir: a data/hora de retirada já não está mais no futuro. Ajuste o agendamento e verifique a disponibilidade novamente.');
+		return;
+	}
+
+	var conflito = Object.keys(reservas).some(function(id){
+		var r = reservas[id];
+		return r.placa === placa && overlap(retirada, devolucao, new Date(r.retirada), new Date(r.devolucao));
+	});
+	if (conflito) {
+		mostrarAlertaAgendamento('error', 'Esta viatura acabou de ser reservada por outra pessoa para um período conflitante. Verifique a disponibilidade novamente.');
+		verificarDisponibilidade(false);
+		return;
+	}
+
+	var digitos = $('#inpMatricula').val().replace(/\D/g, '');
+	var servidor = SERVIDOR_BY_MAT[digitos];
+	var v = VEICULO_BY_PLACA[placa];
+
+	var reserva = {
+		placa: placa,
+		veiculo: v.veiculo,
+		matricula: digitos,
+		nome: servidor.nome,
+		local: local,
+		setor: $('#selSetor').val(),
+		finalidade: $('#selFinalidade').val(),
+		retirada: retirada.toISOString(),
+		devolucao: devolucao.toISOString(),
+		criadoEm: new Date().toISOString()
+	};
+
+	gravarReserva(reserva, function(sucesso){
+		if (sucesso) {
+			mostrarAlertaAgendamento('success', 'Reserva confirmada para a viatura ' + v.veiculo + ' (' + placa + ').');
+			verificarDisponibilidade(false);
+		} else {
+			mostrarAlertaAgendamento('error', 'Não foi possível gravar a reserva. Tente novamente.');
+		}
+	});
+}
+
+// ======================= DASHBOARD "FROTA DE VEÍCULOS" =======================
+
+var FROTA_COLUNAS = [
+	{ id:'veiculo',    titulo:'Veículo',              tipo:'texto'   },
+	{ id:'placa',      titulo:'Placa',                tipo:'texto'   },
+	{ id:'caracterizada', titulo:'Caracterizada',     tipo:'select', opcoes: CARACTERIZADAS_DISTINTAS },
+	{ id:'lotado',     titulo:'Lotado',               tipo:'select', opcoes: LOCAIS },
+	{ id:'propriedade',titulo:'Propriedade',          tipo:'select', opcoes: PROPRIEDADES_DISTINTAS },
+	{ id:'status',     titulo:'Status',               tipo:'select', opcoes: ['DISPONÍVEL','EM USO'] },
+	{ id:'responsavel',titulo:'Responsável',          tipo:'texto'   },
+	{ id:'setor',      titulo:'Setor solicitante',    tipo:'select', opcoes: SETORES },
+	{ id:'finalidade', titulo:'Finalidade',           tipo:'select', opcoes: FINALIDADES },
+	{ id:'retiradaFmt',titulo:'Data/hora de retirada',tipo:'texto'   },
+	{ id:'devolucaoFmt',titulo:'Data/hora de devolução', tipo:'texto'}
+];
+
+var frotaFiltros = {};
+var frotaSort = { col:'veiculo', dir:'asc' };
+
+function montarCabecalhoFrota() {
+	var $head = $('#frotaHeaderRow').empty();
+	var $filterRow = $('#frotaFilterRow').empty();
+
+	FROTA_COLUNAS.forEach(function(c){
+		var $th = $('<th>').attr('data-col', c.id).html(c.titulo + ' <span class="arrow"></span>');
+		$head.append($th);
+
+		var $filterTh = $('<th>');
+		if (c.tipo === 'select') {
+			var $sel = $('<select>').attr('data-col', c.id);
+			$sel.append('<option value="">Todos</option>');
+			c.opcoes.forEach(function(o){ $sel.append('<option value="' + o + '">' + o + '</option>'); });
+			$filterTh.append($sel);
+		} else {
+			var $inp = $('<input type="text" placeholder="Filtrar…">').attr('data-col', c.id);
+			$filterTh.append($inp);
+		}
+		$filterRow.append($filterTh);
+	});
+
+	$head.off('click', 'th').on('click', 'th', function(){
+		var col = $(this).data('col');
+		if (frotaSort.col === col) {
+			frotaSort.dir = frotaSort.dir === 'asc' ? 'desc' : 'asc';
+		} else {
+			frotaSort.col = col;
+			frotaSort.dir = 'asc';
+		}
+		renderFrota();
+	});
+
+	$filterRow.off('input change', 'input, select').on('input change', 'input, select', function(){
+		var col = $(this).data('col');
+		frotaFiltros[col] = $(this).val();
+		renderFrota();
+	});
+}
+
+function reservaAtivaParaPlaca(placa, agora) {
+	var ativa = null;
+	Object.keys(reservas).forEach(function(id){
+		var r = reservas[id];
+		if (r.placa !== placa) return;
+		var ini = new Date(r.retirada), fim = new Date(r.devolucao);
+		if (ini.getTime() <= agora.getTime() && agora.getTime() < fim.getTime()) ativa = r;
+	});
+	return ativa;
+}
+
+function construirLinhasFrota() {
+	var agora = new Date();
+	return VEICULOS.map(function(v){
+		var res = reservaAtivaParaPlaca(v.placa, agora);
+		return {
+			veiculo: v.veiculo,
+			placa: v.placa,
+			caracterizada: v.caracterizada,
+			lotado: v.lotado,
+			propriedade: v.propriedade,
+			status: res ? 'EM USO' : 'DISPONÍVEL',
+			responsavel: res ? res.nome : '-',
+			setor: res ? res.setor : '-',
+			finalidade: res ? res.finalidade : '-',
+			retirada: res ? new Date(res.retirada) : null,
+			devolucao: res ? new Date(res.devolucao) : null,
+			retiradaFmt: res ? formatDataHoraRecife(new Date(res.retirada)) : '-',
+			devolucaoFmt: res ? formatDataHoraRecife(new Date(res.devolucao)) : '-'
+		};
+	});
+}
+
+function renderFrota() {
+	var linhas = construirLinhasFrota();
+
+	Object.keys(frotaFiltros).forEach(function(col){
+		var valor = frotaFiltros[col];
+		if (!valor) return;
+		var coluna = FROTA_COLUNAS.filter(function(c){ return c.id === col; })[0];
+		linhas = linhas.filter(function(l){
+			if (coluna && coluna.tipo === 'select') return String(l[col]) === valor;
+			return String(l[col]).toLowerCase().indexOf(valor.toLowerCase()) !== -1;
+		});
+	});
+
+	linhas.sort(function(a, b){
+		var col = frotaSort.col;
+		var av = a[col], bv = b[col];
+		if (av instanceof Date || bv instanceof Date) {
+			av = av ? av.getTime() : -Infinity;
+			bv = bv ? bv.getTime() : -Infinity;
+		} else {
+			av = (av === null || av === undefined) ? '' : String(av).toLowerCase();
+			bv = (bv === null || bv === undefined) ? '' : String(bv).toLowerCase();
+		}
+		if (av < bv) return frotaSort.dir === 'asc' ? -1 : 1;
+		if (av > bv) return frotaSort.dir === 'asc' ? 1 : -1;
+		return 0;
+	});
+
+	$('#frotaHeaderRow th .arrow').text('');
+	$('#frotaHeaderRow th[data-col="' + frotaSort.col + '"] .arrow').text(frotaSort.dir === 'asc' ? '▲' : '▼');
+
+	var $tbody = $('#frotaBody').empty();
+	linhas.forEach(function(l){
+		var classe = l.status === 'EM USO' ? 'row-uso' : 'row-disponivel';
+		var $row = $('<tr>').addClass(classe);
+		$row.append('<td>' + l.veiculo + '</td>');
+		$row.append('<td class="num">' + l.placa + '</td>');
+		$row.append('<td>' + l.caracterizada + '</td>');
+		$row.append('<td>' + l.lotado + '</td>');
+		$row.append('<td>' + l.propriedade + '</td>');
+		var pillClasse = l.status === 'EM USO' ? 'uso' : 'disponivel';
+		$row.append('<td><span class="status-pill ' + pillClasse + '">' + l.status + '</span></td>');
+		$row.append('<td>' + l.responsavel + '</td>');
+		$row.append('<td>' + l.setor + '</td>');
+		$row.append('<td>' + l.finalidade + '</td>');
+		$row.append('<td class="num">' + l.retiradaFmt + '</td>');
+		$row.append('<td class="num">' + l.devolucaoFmt + '</td>');
+		$tbody.append($row);
+	});
+}
+
+function atualizarRelogio() {
+	$('#relogioAgora').text(formatDataHoraRecife(new Date()));
+}
+
+// ======================= EVENTOS =======================
+
+$(document).ready(function(){
+	popularDropdowns();
+	montarCabecalhoFrota();
+	atualizarRelogio();
+
+	iniciarSincronizacao();
+
+	$('#inpMatricula').on('input', function(){
+		formatarMatriculaInput();
+		atualizarEstadoBotao();
+	});
+	$('#inpDataRetirada, #inpHoraRetirada, #inpDataDevolucao, #inpHoraDevolucao, #selLocal, #selSetor, #selFinalidade')
+		.on('input change', atualizarEstadoBotao);
+
+	$('#btnVerificar').on('click', function(){
+		verificarDisponibilidade(true);
+	});
+
+	setInterval(function(){
+		atualizarRelogio();
+		renderFrota();
+	}, 15000);
+});
+</script>
+</body>
+</html>
