@@ -29,8 +29,11 @@
 	--ink-900:#16202c;
 	--ink-600:#4b5768;
 	--ink-400:#79879a;
+	--gray-600:#6b7785;
+	--gray-bg:#e7e9ec;
 	--line:#dcd6c6;
 	--ok-bg:#e9f3ec;
+	--warn-bg:#fdf2df;
 	--danger:#b3432b;
 	--danger-bg:#fbeae5;
 	--radius:10px;
@@ -161,14 +164,14 @@ a{color:var(--navy-700);}
 }
 .sync-badge.sync-live{background:var(--ok-bg); color:var(--green-700); border:1px solid #cfe3d6;}
 .sync-badge.sync-live::before{background:var(--green-600);}
-.sync-badge.sync-local{background:#fdf2df; color:var(--gold-600); border:1px solid #f0ddb0;}
+.sync-badge.sync-local{background:var(--warn-bg); color:var(--gold-600); border:1px solid #f0ddb0;}
 .sync-badge.sync-local::before{background:var(--gold-600);}
 .sync-badge.sync-error{background:var(--danger-bg); color:var(--danger); border:1px solid #f0c3b5;}
 .sync-badge.sync-error::before{background:var(--danger);}
 .sync-warning{
 	font-size:12px;
 	color:var(--gold-600);
-	background:#fdf2df;
+	background:var(--warn-bg);
 	border-left:3px solid var(--gold-500);
 	padding:9px 12px;
 	border-radius:4px;
@@ -247,6 +250,33 @@ a{color:var(--navy-700);}
 	opacity:.45;
 	cursor:not-allowed;
 }
+.btn-secondary{
+	font:inherit;
+	font-size:13px;
+	font-weight:600;
+	color:var(--ink-600);
+	background:#fff;
+	border:1.5px solid var(--line);
+	border-radius:8px;
+	padding:9px 14px;
+	cursor:pointer;
+	transition:background .15s;
+}
+.btn-secondary:hover{background:var(--cream-100);}
+.btn-danger{
+	font:inherit;
+	font-size:13px;
+	font-weight:700;
+	color:#fff;
+	background:var(--danger);
+	border:1.5px solid var(--danger);
+	border-radius:8px;
+	padding:9px 14px;
+	cursor:pointer;
+	transition:background .15s, opacity .15s;
+}
+.btn-danger:hover:not(:disabled){background:#963823;}
+.btn-danger:disabled{opacity:.45; cursor:not-allowed;}
 .form-alert{
 	font-size:13px;
 	padding:10px 13px;
@@ -256,6 +286,7 @@ a{color:var(--navy-700);}
 }
 .form-alert.error{color:var(--danger); background:var(--danger-bg); border-left:3px solid var(--danger);}
 .form-alert.success{color:var(--green-700); background:var(--ok-bg); border-left:3px solid var(--green-600);}
+.form-alert .codigo-gerado{font-family:'JetBrains Mono',monospace; font-weight:700;}
 
 /* ---------- tabela de veículos disponíveis ---------- */
 .avail-wrap{margin-top:18px;}
@@ -294,6 +325,21 @@ table.avail tbody tr:hover td{background:var(--cream-100);}
 }
 .btn-reservar:hover{background:#d9ecdf;}
 .btn-reservar:disabled{opacity:.4; cursor:not-allowed;}
+.btn-cancelar{
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	width:28px;
+	height:28px;
+	border-radius:50%;
+	border:1.5px solid var(--danger);
+	background:var(--danger-bg);
+	color:var(--danger);
+	cursor:pointer;
+	transition:background .15s;
+}
+.btn-cancelar:hover{background:#f5d9d0;}
+.dash{color:var(--ink-400);}
 .empty-note{
 	font-size:12.5px;
 	color:var(--ink-400);
@@ -301,8 +347,8 @@ table.avail tbody tr:hover td{background:var(--cream-100);}
 	padding:14px 4px;
 }
 
-/* ---------- dashboard "frota de veículos" ---------- */
-.frota-toolbar{
+/* ---------- tabelas interativas (frota / agendados) ---------- */
+.table-toolbar{
 	display:flex;
 	justify-content:space-between;
 	align-items:center;
@@ -310,21 +356,21 @@ table.avail tbody tr:hover td{background:var(--cream-100);}
 	flex-wrap:wrap;
 	margin-bottom:12px;
 }
-.frota-refresh-note{font-size:11.5px; color:var(--ink-400);}
-.frota-wrap{
+.table-refresh-note{font-size:11.5px; color:var(--ink-400);}
+.table-wrap{
 	overflow:auto;
 	border:1px solid var(--line);
 	border-radius:var(--radius);
 	max-height:74vh;
 }
-table.frota{
+table.datatable{
 	border-collapse:separate;
 	border-spacing:0;
 	width:100%;
 	min-width:1440px;
 	font-size:12.5px;
 }
-table.frota thead th{
+table.datatable thead th{
 	position:sticky;
 	top:0;
 	z-index:3;
@@ -341,8 +387,8 @@ table.frota thead th{
 	cursor:pointer;
 	user-select:none;
 }
-table.frota thead th .arrow{font-size:9px; color:var(--ink-400); margin-left:3px;}
-table.frota thead tr.filter-row th{
+table.datatable thead th .arrow{font-size:9px; color:var(--ink-400); margin-left:3px;}
+table.datatable thead tr.filter-row th{
 	position:sticky;
 	top:29px;
 	z-index:3;
@@ -351,7 +397,7 @@ table.frota thead tr.filter-row th{
 	border-bottom:2px solid var(--line);
 	cursor:default;
 }
-table.frota thead tr.filter-row input, table.frota thead tr.filter-row select{
+table.datatable thead tr.filter-row input, table.datatable thead tr.filter-row select{
 	width:100%;
 	font:inherit;
 	font-size:11.5px;
@@ -361,16 +407,25 @@ table.frota thead tr.filter-row input, table.frota thead tr.filter-row select{
 	background:#fff;
 	color:var(--ink-900);
 }
-table.frota td{
+table.datatable td{
 	padding:7px 8px;
 	border-bottom:1px solid var(--cream-100);
 	vertical-align:middle;
 	white-space:nowrap;
 }
-table.frota tbody tr.row-uso td{background:var(--danger-bg);}
-table.frota tbody tr.row-uso:hover td{background:#f5d9d0;}
-table.frota tbody tr.row-disponivel td{background:var(--ok-bg);}
-table.frota tbody tr.row-disponivel:hover td{background:#d9ecdf;}
+table.datatable tbody tr.row-disponivel td{background:var(--ok-bg);}
+table.datatable tbody tr.row-disponivel:hover td{background:#d9ecdf;}
+table.datatable tbody tr.row-uso td{background:var(--warn-bg);}
+table.datatable tbody tr.row-uso:hover td{background:#f7e6bd;}
+table.datatable tbody tr.row-agendado td{background:var(--ok-bg);}
+table.datatable tbody tr.row-agendado:hover td{background:#d9ecdf;}
+table.datatable tbody tr.row-emuso td{background:var(--warn-bg);}
+table.datatable tbody tr.row-emuso:hover td{background:#f7e6bd;}
+table.datatable tbody tr.row-expirado td{background:var(--gray-bg);}
+table.datatable tbody tr.row-expirado:hover td{background:#d9dce1;}
+table.datatable tbody tr.row-cancelado td{background:var(--danger-bg);}
+table.datatable tbody tr.row-cancelado:hover td{background:#f5d9d0;}
+
 .status-pill{
 	display:inline-block;
 	font-size:10.5px;
@@ -378,9 +433,14 @@ table.frota tbody tr.row-disponivel:hover td{background:#d9ecdf;}
 	letter-spacing:.03em;
 	padding:2px 8px;
 	border-radius:999px;
+	color:#fff;
 }
-.status-pill.uso{background:var(--danger); color:#fff;}
-.status-pill.disponivel{background:var(--green-600); color:#fff;}
+.status-pill.disponivel{background:var(--green-600);}
+.status-pill.uso{background:var(--gold-600);}
+.status-pill.agendado{background:var(--green-600);}
+.status-pill.emuso{background:var(--gold-600);}
+.status-pill.expirado{background:var(--gray-600);}
+.status-pill.cancelado{background:var(--danger);}
 
 .citation{
 	font-size:12px;
@@ -391,6 +451,34 @@ table.frota tbody tr.row-disponivel:hover td{background:#d9ecdf;}
 	border-radius:4px;
 	margin-top:14px;
 	line-height:1.5;
+}
+
+/* ---------- modal de cancelamento ---------- */
+.modal-overlay{
+	position:fixed;
+	inset:0;
+	background:rgba(12,31,54,.55);
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	z-index:80;
+	padding:20px;
+}
+.modal-box{
+	background:#fff;
+	border-radius:var(--radius);
+	box-shadow:var(--shadow);
+	padding:22px 24px;
+	max-width:380px;
+	width:100%;
+}
+.modal-box h3{font-size:16px; margin-bottom:10px;}
+.modal-text{font-size:13px; color:var(--ink-600); margin-bottom:14px; line-height:1.5;}
+.modal-actions{
+	display:flex;
+	justify-content:flex-end;
+	gap:10px;
+	margin-top:16px;
 }
 
 footer{
@@ -421,13 +509,13 @@ footer a{color:var(--ink-600);}
 
 	<div class="card">
 		<h2>Agendamento <span class="tag">reserva de viatura</span></h2>
-		<p class="lead">Preencha os dados da retirada e da devolução para verificar quais viaturas estão disponíveis no local escolhido. Os horários seguem o fuso de Recife (UTC−3) e devem estar no futuro em relação ao momento atual.</p>
+		<p class="lead">Preencha os dados da retirada e da devolução para verificar quais viaturas estão disponíveis no local escolhido. Os horários seguem o fuso de Natal (UTC−3) e devem estar no futuro em relação ao momento atual.</p>
 
 		<div id="avisoLocalAgendamento" class="sync-warning hidden">⚠️ A sincronização em tempo real com o Firebase não está configurada (ou não foi possível conectar). As reservas estão sendo salvas apenas neste navegador. Veja o <code>README.md</code> do repositório para configurar a sincronização entre todos os usuários.</div>
 
 		<div class="status-line">
 			<span id="syncBadge" class="sync-badge sync-local">Conectando…</span>
-			<span>Agora (Recife): <b id="relogioAgora" class="num">—</b></span>
+			<span>Agora (Natal): <b id="relogioAgora" class="num">—</b></span>
 		</div>
 
 		<div class="form-grid">
@@ -483,19 +571,39 @@ footer a{color:var(--ink-600);}
 			<div class="empty-note hidden" id="availEmpty">Nenhuma viatura disponível nesse local para o período selecionado.</div>
 		</div>
 
-		<div class="citation">A disponibilidade é recalculada com base nas reservas já registradas para cada viatura: uma viatura só aparece como disponível se não houver, para o período solicitado, nenhuma outra reserva com horário sobreposto.</div>
+		<div class="citation">A disponibilidade é recalculada com base nas reservas já registradas para cada viatura: uma viatura só aparece como disponível se não houver, para o período solicitado, nenhuma outra reserva ativa (não cancelada) com horário sobreposto.</div>
+	</div>
+
+	<div class="card">
+		<h2>Agendados <span class="tag">gerenciar reservas</span></h2>
+		<p class="lead">Todos os agendamentos já registrados, com o código gerado para cada um, o status atual e a opção de cancelamento. Clique no título de uma coluna para ordenar e use os campos abaixo dos títulos para filtrar.</p>
+
+		<div class="table-toolbar">
+			<span class="table-refresh-note">Atualizado automaticamente a cada 15 segundos, conforme o horário de Natal.</span>
+		</div>
+
+		<div class="table-wrap">
+			<table class="datatable" id="tblAgendados">
+				<thead>
+					<tr id="agendadosHeaderRow"></tr>
+					<tr class="filter-row" id="agendadosFilterRow"></tr>
+				</thead>
+				<tbody id="agendadosBody"></tbody>
+			</table>
+		</div>
+		<div class="citation">AGENDADO (verde): a retirada ainda não começou. EM USO (amarelo): já foi retirado e a devolução ainda não chegou. EXPIRADO (cinza): a devolução já chegou. CANCELADO (vermelho): o agendamento foi cancelado pelo responsável. O código do agendamento permanece registrado mesmo após o cancelamento, inclusive para o cômputo do limite diário de 99 agendamentos por matrícula.</div>
 	</div>
 
 	<div class="card">
 		<h2>Frota de veículos <span class="tag">status ao vivo</span></h2>
 		<p class="lead">Situação, em tempo real, de todas as 56 viaturas da frota. Clique no título de uma coluna para ordenar e use os campos abaixo dos títulos para filtrar.</p>
 
-		<div class="frota-toolbar">
-			<span class="frota-refresh-note">Atualizado automaticamente a cada 15 segundos, conforme o horário de Recife.</span>
+		<div class="table-toolbar">
+			<span class="table-refresh-note">Atualizado automaticamente a cada 15 segundos, conforme o horário de Natal.</span>
 		</div>
 
-		<div class="frota-wrap">
-			<table class="frota" id="tblFrota">
+		<div class="table-wrap">
+			<table class="datatable" id="tblFrota">
 				<thead>
 					<tr id="frotaHeaderRow"></tr>
 					<tr class="filter-row" id="frotaFilterRow"></tr>
@@ -510,6 +618,22 @@ footer a{color:var(--ink-600);}
 <footer>
 	<p>Sistema independente e não-oficial, sem qualquer vínculo institucional com a Sefaz/RN. Os dados de agendamento aqui registrados têm caráter de apoio operacional interno à SUMAT e não substituem os controles administrativos oficiais. Projetos irmãos: <a href="https://bacalhaunabrisa.github.io/lotacaosefazrn/" target="_blank" rel="noopener">lotacaosefazrn</a> e <a href="https://bacalhaunabrisa.github.io/remunerasefazrn/" target="_blank" rel="noopener">remunerasefazrn</a>.</p>
 </footer>
+
+<div class="modal-overlay hidden" id="modalCancelar">
+	<div class="modal-box">
+		<h3>Cancelar agendamento</h3>
+		<p class="modal-text">Código: <b id="modalCodigo" class="num"></b><br/>Para confirmar o cancelamento, informe a matrícula do responsável pelo agendamento original.</p>
+		<div class="field">
+			<label for="modalMatricula">Matrícula do responsável</label>
+			<input type="text" id="modalMatricula" inputmode="numeric" placeholder="256.410-6" maxlength="9"/>
+			<div class="field-msg" id="modalMatriculaMsg"></div>
+		</div>
+		<div class="modal-actions">
+			<button type="button" class="btn-secondary" id="modalFechar">Voltar</button>
+			<button type="button" class="btn-danger" id="modalConfirmar" disabled>Confirmar cancelamento</button>
+		</div>
+	</div>
+</div>
 
 <script>
 // ======================= DADOS =======================
@@ -655,13 +779,13 @@ var PROPRIEDADES_DISTINTAS = Array.from(new Set(VEICULOS.map(function(v){ return
 // visível na página.
 
 var FIREBASE_CONFIG = {
-	apiKey: "AIzaSyA2rbUa7NdXo6H-TSYWyD8Esauct7Bigik",
-	authDomain: "frotasefazrn.firebaseapp.com",
-	databaseURL: "https://frotasefazrn-default-rtdb.firebaseio.com",
-	projectId: "frotasefazrn",
-	storageBucket: "frotasefazrn.firebasestorage.app",
-	messagingSenderId: "318943696552",
-	appId: "1:318943696552:web:c202024a5d6da66cfcd49d"
+	apiKey: "SUA_API_KEY_AQUI",
+	authDomain: "SEU_PROJETO.firebaseapp.com",
+	databaseURL: "https://SEU_PROJETO-default-rtdb.firebaseio.com",
+	projectId: "SEU_PROJETO",
+	storageBucket: "SEU_PROJETO.appspot.com",
+	messagingSenderId: "000000000000",
+	appId: "1:000000000000:web:0000000000000000000000"
 };
 
 var FIREBASE_PATH = 'reservas'; // não altere: caminho usado dentro do banco de dados
@@ -692,12 +816,17 @@ function setSyncBadge(modo) {
 	}
 }
 
+function renderTudo() {
+	renderFrota();
+	renderAgendados();
+}
+
 function iniciarSincronizacao() {
 	if (!configuracaoFirebaseValida() || typeof firebase === 'undefined') {
 		firebaseAtivo = false;
 		setSyncBadge('local');
 		loadStateLocal();
-		renderFrota();
+		renderTudo();
 		return;
 	}
 
@@ -709,7 +838,7 @@ function iniciarSincronizacao() {
 		firebaseAtivo = false;
 		setSyncBadge('error');
 		loadStateLocal();
-		renderFrota();
+		renderTudo();
 		return;
 	}
 
@@ -717,14 +846,14 @@ function iniciarSincronizacao() {
 		firebaseAtivo = true;
 		setSyncBadge('live');
 		reservas = snapshot.val() || {};
-		renderFrota();
+		renderTudo();
 		if (!$('#availWrap').hasClass('hidden')) verificarDisponibilidade(false);
 	}, function(erro) {
 		console.error('Erro de sincronização com o Firebase:', erro);
 		firebaseAtivo = false;
 		setSyncBadge('error');
 		loadStateLocal();
-		renderFrota();
+		renderTudo();
 	});
 }
 
@@ -738,7 +867,24 @@ function gravarReserva(reserva, callback) {
 		var id = 'local_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
 		reservas[id] = reserva;
 		saveStateLocal();
-		renderFrota();
+		renderTudo();
+		callback(true);
+	}
+}
+
+function cancelarReserva(id, callback) {
+	var patch = { cancelado: true, canceladoEm: new Date().toISOString() };
+	if (firebaseAtivo && db) {
+		db.ref(FIREBASE_PATH + '/' + id).update(patch, function(erro) {
+			callback(!erro);
+		});
+	} else {
+		if (reservas[id]) {
+			reservas[id].cancelado = true;
+			reservas[id].canceladoEm = patch.canceladoEm;
+			saveStateLocal();
+			renderTudo();
+		}
 		callback(true);
 	}
 }
@@ -755,20 +901,34 @@ function saveStateLocal() {
 	catch (e) { console.warn('Não foi possível salvar a reserva neste navegador.', e); }
 }
 
-// ======================= HELPERS DE DATA/HORA (fuso de Recife, UTC-3 fixo) =======================
+// ======================= HELPERS DE DATA/HORA (fuso de Natal/Recife, UTC-3 fixo) =======================
+//
+// O fuso horário civil de Natal/RN é o mesmo de Recife (UTC-3, sem horário de
+// verão), por isso o identificador técnico IANA "America/Recife" continua sendo
+// usado internamente para todos os cálculos — apenas os textos exibidos ao usuário
+// mencionam "Natal".
+
+function pad2(n) {
+	n = String(n);
+	return n.length < 2 ? '0' + n : n;
+}
 
 function hojeRecifeISO() {
-	// aaaa-mm-dd correspondente ao dia atual no fuso de Recife, independente do
+	// aaaa-mm-dd correspondente ao dia atual no fuso de Natal, independente do
 	// fuso horário do dispositivo de quem está usando o navegador.
-	var partes = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date());
+	return recifeDateParts(new Date()).iso;
+}
+
+function recifeDateParts(date) {
+	var partes = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(date);
 	var obj = {};
 	partes.forEach(function(p){ obj[p.type] = p.value; });
-	return obj.year + '-' + obj.month + '-' + obj.day;
+	return { year: obj.year, month: obj.month, day: obj.day, iso: obj.year + '-' + obj.month + '-' + obj.day };
 }
 
 function parseDataHoraRecife(dataStr, horaStr) {
 	if (!dataStr || !horaStr) return null;
-	// -03:00 é o deslocamento fixo do horário de Recife (Brasil não usa mais horário de verão).
+	// -03:00 é o deslocamento fixo do horário de Natal/Recife (Brasil não usa mais horário de verão).
 	var d = new Date(dataStr + 'T' + horaStr + ':00-03:00');
 	return isNaN(d.getTime()) ? null : d;
 }
@@ -782,6 +942,30 @@ function formatDataHoraRecife(date) {
 
 function overlap(aStart, aEnd, bStart, bEnd) {
 	return aStart < bEnd && bStart < aEnd;
+}
+
+// ======================= CÓDIGO DE AGENDAMENTO =======================
+//
+// Formato: <matrícula (7 dígitos)><ano><mês><dia><sequencial de 01 a 99>, onde a
+// data usada é a do momento em que o agendamento foi efetivamente registrado (não
+// as datas de retirada/devolução escolhidas), no fuso de Natal/Recife. O
+// sequencial conta TODOS os agendamentos já feitos por aquela matrícula naquele
+// dia, incluindo os cancelados, pois o código permanece gravado mesmo após o
+// cancelamento.
+
+function gerarCodigoAgendamento(matriculaDigitos, momentoCriacao) {
+	var partes = recifeDateParts(momentoCriacao);
+	var prefixoDia = matriculaDigitos + partes.year + partes.month + partes.day;
+
+	var contagem = Object.keys(reservas).filter(function(id){
+		var codigo = reservas[id].codigo;
+		return codigo && codigo.indexOf(prefixoDia) === 0;
+	}).length;
+
+	var seq = contagem + 1;
+	if (seq > 99) return null; // limite diário de 99 agendamentos por matrícula atingido
+
+	return prefixoDia + pad2(seq);
 }
 
 // ======================= FORMULÁRIO DE AGENDAMENTO =======================
@@ -844,6 +1028,11 @@ function limparAlertaAgendamento() {
 	$('#agendamentoAlert').empty();
 }
 
+function reservasAtivas() {
+	// exclui cancelamentos: uma reserva cancelada não bloqueia mais o horário da viatura
+	return Object.keys(reservas).filter(function(id){ return !reservas[id].cancelado; });
+}
+
 function verificarDisponibilidade(mostrarErrosDeData) {
 	if (mostrarErrosDeData === undefined) mostrarErrosDeData = true;
 
@@ -855,7 +1044,7 @@ function verificarDisponibilidade(mostrarErrosDeData) {
 
 	var agora = new Date();
 	if (mostrarErrosDeData && retirada.getTime() <= agora.getTime()) {
-		mostrarAlertaAgendamento('error', 'A data/hora de retirada precisa estar no futuro em relação ao horário atual de Recife.');
+		mostrarAlertaAgendamento('error', 'A data/hora de retirada precisa estar no futuro em relação ao horário atual de Natal.');
 		$('#availWrap').addClass('hidden');
 		return;
 	}
@@ -868,7 +1057,7 @@ function verificarDisponibilidade(mostrarErrosDeData) {
 
 	var candidatos = VEICULOS.filter(function(v){ return v.lotado === local; });
 
-	var listaReservas = Object.keys(reservas).map(function(id){
+	var listaReservas = reservasAtivas().map(function(id){
 		var r = reservas[id];
 		return { id:id, placa:r.placa, retirada:new Date(r.retirada), devolucao:new Date(r.devolucao) };
 	});
@@ -918,7 +1107,7 @@ function reservarViatura(placa, retirada, devolucao, local) {
 		return;
 	}
 
-	var conflito = Object.keys(reservas).some(function(id){
+	var conflito = reservasAtivas().some(function(id){
 		var r = reservas[id];
 		return r.placa === placa && overlap(retirada, devolucao, new Date(r.retirada), new Date(r.devolucao));
 	});
@@ -932,7 +1121,14 @@ function reservarViatura(placa, retirada, devolucao, local) {
 	var servidor = SERVIDOR_BY_MAT[digitos];
 	var v = VEICULO_BY_PLACA[placa];
 
+	var codigo = gerarCodigoAgendamento(digitos, agora);
+	if (!codigo) {
+		mostrarAlertaAgendamento('error', 'Limite de 99 agendamentos no dia de hoje foi atingido para esta matrícula (o limite inclui agendamentos já cancelados).');
+		return;
+	}
+
 	var reserva = {
+		codigo: codigo,
 		placa: placa,
 		veiculo: v.veiculo,
 		matricula: digitos,
@@ -942,12 +1138,13 @@ function reservarViatura(placa, retirada, devolucao, local) {
 		finalidade: $('#selFinalidade').val(),
 		retirada: retirada.toISOString(),
 		devolucao: devolucao.toISOString(),
-		criadoEm: new Date().toISOString()
+		criadoEm: agora.toISOString(),
+		cancelado: false
 	};
 
 	gravarReserva(reserva, function(sucesso){
 		if (sucesso) {
-			mostrarAlertaAgendamento('success', 'Reserva confirmada para a viatura ' + v.veiculo + ' (' + placa + ').');
+			mostrarAlertaAgendamento('success', 'Reserva confirmada para a viatura ' + v.veiculo + ' (' + placa + '). Código do agendamento: <span class="codigo-gerado">' + codigo + '</span>.');
 			verificarDisponibilidade(false);
 		} else {
 			mostrarAlertaAgendamento('error', 'Não foi possível gravar a reserva. Tente novamente.');
@@ -955,69 +1152,129 @@ function reservarViatura(placa, retirada, devolucao, local) {
 	});
 }
 
-// ======================= DASHBOARD "FROTA DE VEÍCULOS" =======================
+// ======================= TABELA INTERATIVA GENÉRICA (ordenação + filtro) =======================
 
-var FROTA_COLUNAS = [
-	{ id:'veiculo',    titulo:'Veículo',              tipo:'texto'   },
-	{ id:'placa',      titulo:'Placa',                tipo:'texto'   },
-	{ id:'caracterizada', titulo:'Caracterizada',     tipo:'select', opcoes: CARACTERIZADAS_DISTINTAS },
-	{ id:'lotado',     titulo:'Lotado',               tipo:'select', opcoes: LOCAIS },
-	{ id:'propriedade',titulo:'Propriedade',          tipo:'select', opcoes: PROPRIEDADES_DISTINTAS },
-	{ id:'status',     titulo:'Status',               tipo:'select', opcoes: ['DISPONÍVEL','EM USO'] },
-	{ id:'responsavel',titulo:'Responsável',          tipo:'texto'   },
-	{ id:'setor',      titulo:'Setor solicitante',    tipo:'select', opcoes: SETORES },
-	{ id:'finalidade', titulo:'Finalidade',           tipo:'select', opcoes: FINALIDADES },
-	{ id:'retiradaFmt',titulo:'Data/hora de retirada',tipo:'texto'   },
-	{ id:'devolucaoFmt',titulo:'Data/hora de devolução', tipo:'texto'}
-];
+function TabelaInterativa(opts) {
+	this.colunas = opts.colunas;
+	this.$headerRow = $(opts.headerRowSelector);
+	this.$filterRow = $(opts.filterRowSelector);
+	this.$body = $(opts.bodySelector);
+	this.obterLinhas = opts.obterLinhas;
+	this.montarLinha = opts.montarLinha;
+	this.filtros = {};
+	this.sort = { col: opts.sortPadrao || opts.colunas[0].id, dir: 'asc' };
+	this._montarCabecalho();
+}
 
-var frotaFiltros = {};
-var frotaSort = { col:'veiculo', dir:'asc' };
+TabelaInterativa.prototype._montarCabecalho = function() {
+	var self = this;
+	this.$headerRow.empty();
+	this.$filterRow.empty();
 
-function montarCabecalhoFrota() {
-	var $head = $('#frotaHeaderRow').empty();
-	var $filterRow = $('#frotaFilterRow').empty();
-
-	FROTA_COLUNAS.forEach(function(c){
-		var $th = $('<th>').attr('data-col', c.id).html(c.titulo + ' <span class="arrow"></span>');
-		$head.append($th);
+	this.colunas.forEach(function(c){
+		var $th = $('<th>').attr('data-col', c.id);
+		if (c.tipo === 'acao') {
+			$th.text(c.titulo).css('cursor', 'default');
+		} else {
+			$th.html(c.titulo + ' <span class="arrow"></span>');
+		}
+		self.$headerRow.append($th);
 
 		var $filterTh = $('<th>');
 		if (c.tipo === 'select') {
 			var $sel = $('<select>').attr('data-col', c.id);
 			$sel.append('<option value="">Todos</option>');
-			c.opcoes.forEach(function(o){ $sel.append('<option value="' + o + '">' + o + '</option>'); });
+			(c.opcoes || []).forEach(function(o){ $sel.append('<option value="' + o + '">' + o + '</option>'); });
 			$filterTh.append($sel);
+		} else if (c.tipo === 'acao') {
+			// sem filtro para colunas de ação
 		} else {
 			var $inp = $('<input type="text" placeholder="Filtrar…">').attr('data-col', c.id);
 			$filterTh.append($inp);
 		}
-		$filterRow.append($filterTh);
+		self.$filterRow.append($filterTh);
 	});
 
-	$head.off('click', 'th').on('click', 'th', function(){
+	this.$headerRow.off('click', 'th').on('click', 'th', function(){
 		var col = $(this).data('col');
-		if (frotaSort.col === col) {
-			frotaSort.dir = frotaSort.dir === 'asc' ? 'desc' : 'asc';
+		var coluna = self.colunas.filter(function(c){ return c.id === col; })[0];
+		if (!coluna || coluna.tipo === 'acao') return;
+		if (self.sort.col === col) {
+			self.sort.dir = self.sort.dir === 'asc' ? 'desc' : 'asc';
 		} else {
-			frotaSort.col = col;
-			frotaSort.dir = 'asc';
+			self.sort.col = col;
+			self.sort.dir = 'asc';
 		}
-		renderFrota();
+		self.render();
 	});
 
-	$filterRow.off('input change', 'input, select').on('input change', 'input, select', function(){
+	this.$filterRow.off('input change', 'input, select').on('input change', 'input, select', function(){
 		var col = $(this).data('col');
-		frotaFiltros[col] = $(this).val();
-		renderFrota();
+		self.filtros[col] = $(this).val();
+		self.render();
 	});
-}
+};
+
+TabelaInterativa.prototype.render = function() {
+	var self = this;
+	var linhas = this.obterLinhas();
+
+	Object.keys(this.filtros).forEach(function(col){
+		var valor = self.filtros[col];
+		if (!valor) return;
+		var coluna = self.colunas.filter(function(c){ return c.id === col; })[0];
+		linhas = linhas.filter(function(l){
+			if (coluna && coluna.tipo === 'select') return String(l[col]) === valor;
+			var alvo = l[col] === null || l[col] === undefined ? '' : String(l[col]);
+			return alvo.toLowerCase().indexOf(valor.toLowerCase()) !== -1;
+		});
+	});
+
+	var col = this.sort.col, dir = this.sort.dir;
+	var colunaOrdenada = this.colunas.filter(function(c){ return c.id === col; })[0];
+	linhas.sort(function(a, b){
+		var av = colunaOrdenada && colunaOrdenada.sortValue ? colunaOrdenada.sortValue(a) : a[col];
+		var bv = colunaOrdenada && colunaOrdenada.sortValue ? colunaOrdenada.sortValue(b) : b[col];
+		if (av instanceof Date || bv instanceof Date) {
+			av = av ? av.getTime() : -Infinity;
+			bv = bv ? bv.getTime() : -Infinity;
+		} else {
+			av = (av === null || av === undefined) ? '' : String(av).toLowerCase();
+			bv = (bv === null || bv === undefined) ? '' : String(bv).toLowerCase();
+		}
+		if (av < bv) return dir === 'asc' ? -1 : 1;
+		if (av > bv) return dir === 'asc' ? 1 : -1;
+		return 0;
+	});
+
+	this.$headerRow.find('th .arrow').text('');
+	this.$headerRow.find('th[data-col="' + col + '"] .arrow').text(dir === 'asc' ? '▲' : '▼');
+
+	this.$body.empty();
+	linhas.forEach(function(l){ self.$body.append(self.montarLinha(l)); });
+};
+
+// ======================= DASHBOARD "FROTA DE VEÍCULOS" =======================
+
+var FROTA_COLUNAS = [
+	{ id:'veiculo',     titulo:'Veículo',               tipo:'texto' },
+	{ id:'placa',       titulo:'Placa',                 tipo:'texto' },
+	{ id:'caracterizada', titulo:'Caracterizada',       tipo:'select', opcoes: CARACTERIZADAS_DISTINTAS },
+	{ id:'lotado',      titulo:'Lotado',                tipo:'select', opcoes: LOCAIS },
+	{ id:'propriedade', titulo:'Propriedade',           tipo:'select', opcoes: PROPRIEDADES_DISTINTAS },
+	{ id:'status',      titulo:'Status',                tipo:'select', opcoes: ['DISPONÍVEL','EM USO'] },
+	{ id:'responsavel', titulo:'Responsável',           tipo:'texto' },
+	{ id:'setor',       titulo:'Setor solicitante',     tipo:'select', opcoes: SETORES },
+	{ id:'finalidade',  titulo:'Finalidade',            tipo:'select', opcoes: FINALIDADES },
+	{ id:'retiradaFmt', titulo:'Data/hora de retirada', tipo:'texto', sortValue:function(l){ return l.retirada; } },
+	{ id:'devolucaoFmt',titulo:'Data/hora de devolução',tipo:'texto', sortValue:function(l){ return l.devolucao; } }
+];
 
 function reservaAtivaParaPlaca(placa, agora) {
 	var ativa = null;
 	Object.keys(reservas).forEach(function(id){
 		var r = reservas[id];
-		if (r.placa !== placa) return;
+		if (r.placa !== placa || r.cancelado) return;
 		var ini = new Date(r.retirada), fim = new Date(r.devolucao);
 		if (ini.getTime() <= agora.getTime() && agora.getTime() < fim.getTime()) ativa = r;
 	});
@@ -1046,56 +1303,155 @@ function construirLinhasFrota() {
 	});
 }
 
+function montarLinhaFrota(l) {
+	var classe = l.status === 'EM USO' ? 'row-uso' : 'row-disponivel';
+	var pillClasse = l.status === 'EM USO' ? 'uso' : 'disponivel';
+	var $row = $('<tr>').addClass(classe);
+	$row.append('<td>' + l.veiculo + '</td>');
+	$row.append('<td class="num">' + l.placa + '</td>');
+	$row.append('<td>' + l.caracterizada + '</td>');
+	$row.append('<td>' + l.lotado + '</td>');
+	$row.append('<td>' + l.propriedade + '</td>');
+	$row.append('<td><span class="status-pill ' + pillClasse + '">' + l.status + '</span></td>');
+	$row.append('<td>' + l.responsavel + '</td>');
+	$row.append('<td>' + l.setor + '</td>');
+	$row.append('<td>' + l.finalidade + '</td>');
+	$row.append('<td class="num">' + l.retiradaFmt + '</td>');
+	$row.append('<td class="num">' + l.devolucaoFmt + '</td>');
+	return $row;
+}
+
+var tabelaFrota = null;
+
 function renderFrota() {
-	var linhas = construirLinhasFrota();
+	if (!tabelaFrota) return;
+	tabelaFrota.render();
+}
 
-	Object.keys(frotaFiltros).forEach(function(col){
-		var valor = frotaFiltros[col];
-		if (!valor) return;
-		var coluna = FROTA_COLUNAS.filter(function(c){ return c.id === col; })[0];
-		linhas = linhas.filter(function(l){
-			if (coluna && coluna.tipo === 'select') return String(l[col]) === valor;
-			return String(l[col]).toLowerCase().indexOf(valor.toLowerCase()) !== -1;
-		});
-	});
+// ======================= DASHBOARD "AGENDADOS" =======================
 
-	linhas.sort(function(a, b){
-		var col = frotaSort.col;
-		var av = a[col], bv = b[col];
-		if (av instanceof Date || bv instanceof Date) {
-			av = av ? av.getTime() : -Infinity;
-			bv = bv ? bv.getTime() : -Infinity;
-		} else {
-			av = (av === null || av === undefined) ? '' : String(av).toLowerCase();
-			bv = (bv === null || bv === undefined) ? '' : String(bv).toLowerCase();
-		}
-		if (av < bv) return frotaSort.dir === 'asc' ? -1 : 1;
-		if (av > bv) return frotaSort.dir === 'asc' ? 1 : -1;
-		return 0;
-	});
+var AGENDADOS_COLUNAS = [
+	{ id:'codigo',      titulo:'Código do agendamento', tipo:'texto' },
+	{ id:'veiculo',     titulo:'Veículo',               tipo:'texto' },
+	{ id:'placa',       titulo:'Placa',                 tipo:'texto' },
+	{ id:'caracterizada', titulo:'Caracterizada',       tipo:'select', opcoes: CARACTERIZADAS_DISTINTAS },
+	{ id:'lotado',      titulo:'Lotado',                tipo:'select', opcoes: LOCAIS },
+	{ id:'propriedade', titulo:'Propriedade',           tipo:'select', opcoes: PROPRIEDADES_DISTINTAS },
+	{ id:'status',      titulo:'Status',                tipo:'select', opcoes: ['AGENDADO','EM USO','EXPIRADO','CANCELADO'] },
+	{ id:'responsavel', titulo:'Responsável',           tipo:'texto' },
+	{ id:'setor',       titulo:'Setor solicitante',     tipo:'select', opcoes: SETORES },
+	{ id:'finalidade',  titulo:'Finalidade',            tipo:'select', opcoes: FINALIDADES },
+	{ id:'retiradaFmt', titulo:'Data/hora de retirada', tipo:'texto', sortValue:function(l){ return l.retirada; } },
+	{ id:'devolucaoFmt',titulo:'Data/hora de devolução',tipo:'texto', sortValue:function(l){ return l.devolucao; } },
+	{ id:'cancelar',    titulo:'Cancelar',              tipo:'acao' }
+];
 
-	$('#frotaHeaderRow th .arrow').text('');
-	$('#frotaHeaderRow th[data-col="' + frotaSort.col + '"] .arrow').text(frotaSort.dir === 'asc' ? '▲' : '▼');
+function statusAgendamento(reserva, agora) {
+	if (reserva.cancelado) return 'CANCELADO';
+	var ini = new Date(reserva.retirada), fim = new Date(reserva.devolucao);
+	if (agora.getTime() < ini.getTime()) return 'AGENDADO';
+	if (agora.getTime() < fim.getTime()) return 'EM USO';
+	return 'EXPIRADO';
+}
 
-	var $tbody = $('#frotaBody').empty();
-	linhas.forEach(function(l){
-		var classe = l.status === 'EM USO' ? 'row-uso' : 'row-disponivel';
-		var $row = $('<tr>').addClass(classe);
-		$row.append('<td>' + l.veiculo + '</td>');
-		$row.append('<td class="num">' + l.placa + '</td>');
-		$row.append('<td>' + l.caracterizada + '</td>');
-		$row.append('<td>' + l.lotado + '</td>');
-		$row.append('<td>' + l.propriedade + '</td>');
-		var pillClasse = l.status === 'EM USO' ? 'uso' : 'disponivel';
-		$row.append('<td><span class="status-pill ' + pillClasse + '">' + l.status + '</span></td>');
-		$row.append('<td>' + l.responsavel + '</td>');
-		$row.append('<td>' + l.setor + '</td>');
-		$row.append('<td>' + l.finalidade + '</td>');
-		$row.append('<td class="num">' + l.retiradaFmt + '</td>');
-		$row.append('<td class="num">' + l.devolucaoFmt + '</td>');
-		$tbody.append($row);
+function construirLinhasAgendados() {
+	var agora = new Date();
+	return Object.keys(reservas).map(function(id){
+		var r = reservas[id];
+		var v = VEICULO_BY_PLACA[r.placa] || {};
+		var status = statusAgendamento(r, agora);
+		return {
+			id: id,
+			codigo: r.codigo || '-',
+			veiculo: v.veiculo || r.veiculo,
+			placa: r.placa,
+			caracterizada: v.caracterizada || '-',
+			lotado: v.lotado || r.local,
+			propriedade: v.propriedade || '-',
+			status: status,
+			responsavel: r.nome,
+			setor: r.setor,
+			finalidade: r.finalidade,
+			retirada: new Date(r.retirada),
+			devolucao: new Date(r.devolucao),
+			retiradaFmt: formatDataHoraRecife(new Date(r.retirada)),
+			devolucaoFmt: formatDataHoraRecife(new Date(r.devolucao)),
+			cancelavel: (status === 'AGENDADO' || status === 'EM USO')
+		};
 	});
 }
+
+var STATUS_AGENDADOS_CLASSE = { 'AGENDADO':'row-agendado', 'EM USO':'row-emuso', 'EXPIRADO':'row-expirado', 'CANCELADO':'row-cancelado' };
+var STATUS_AGENDADOS_PILL = { 'AGENDADO':'agendado', 'EM USO':'emuso', 'EXPIRADO':'expirado', 'CANCELADO':'cancelado' };
+
+function montarLinhaAgendados(l) {
+	var $row = $('<tr>').addClass(STATUS_AGENDADOS_CLASSE[l.status]).attr('data-id', l.id);
+	$row.append('<td class="num">' + l.codigo + '</td>');
+	$row.append('<td>' + l.veiculo + '</td>');
+	$row.append('<td class="num">' + l.placa + '</td>');
+	$row.append('<td>' + l.caracterizada + '</td>');
+	$row.append('<td>' + l.lotado + '</td>');
+	$row.append('<td>' + l.propriedade + '</td>');
+	$row.append('<td><span class="status-pill ' + STATUS_AGENDADOS_PILL[l.status] + '">' + l.status + '</span></td>');
+	$row.append('<td>' + l.responsavel + '</td>');
+	$row.append('<td>' + l.setor + '</td>');
+	$row.append('<td>' + l.finalidade + '</td>');
+	$row.append('<td class="num">' + l.retiradaFmt + '</td>');
+	$row.append('<td class="num">' + l.devolucaoFmt + '</td>');
+
+	var $tdCancelar = $('<td>');
+	if (l.cancelavel) {
+		$tdCancelar.append('<button type="button" class="btn-cancelar" title="Cancelar agendamento" data-id="' + l.id + '">' +
+			'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>');
+	} else {
+		$tdCancelar.append('<span class="dash">—</span>');
+	}
+	$row.append($tdCancelar);
+	return $row;
+}
+
+var tabelaAgendados = null;
+
+function renderAgendados() {
+	if (!tabelaAgendados) return;
+	tabelaAgendados.render();
+}
+
+// ======================= MODAL DE CANCELAMENTO =======================
+
+var idParaCancelar = null;
+
+function abrirModalCancelar(id) {
+	var r = reservas[id];
+	if (!r) return;
+	idParaCancelar = id;
+	$('#modalCodigo').text(r.codigo || '-');
+	$('#modalMatricula').val('').removeClass('invalid');
+	$('#modalMatriculaMsg').text('');
+	$('#modalConfirmar').prop('disabled', true);
+	$('#modalCancelar').removeClass('hidden');
+}
+
+function fecharModalCancelar() {
+	$('#modalCancelar').addClass('hidden');
+	idParaCancelar = null;
+}
+
+function formatarMatriculaModal() {
+	var digitos = $('#modalMatricula').val().replace(/\D/g, '').slice(0, 7);
+	var formatado = digitos;
+	if (digitos.length === 7) {
+		formatado = digitos.slice(0,3) + '.' + digitos.slice(3,6) + '-' + digitos.slice(6);
+	}
+	$('#modalMatricula').val(formatado);
+
+	var r = idParaCancelar ? reservas[idParaCancelar] : null;
+	var ok = digitos.length === 7 && r && digitos === r.matricula;
+	$('#modalMatriculaMsg').text(digitos.length === 7 && !ok ? 'Matrícula não confere com o responsável pelo agendamento.' : '');
+	$('#modalConfirmar').prop('disabled', !ok);
+}
+
+// ======================= RELÓGIO =======================
 
 function atualizarRelogio() {
 	$('#relogioAgora').text(formatDataHoraRecife(new Date()));
@@ -1105,8 +1461,27 @@ function atualizarRelogio() {
 
 $(document).ready(function(){
 	popularDropdowns();
-	montarCabecalhoFrota();
 	atualizarRelogio();
+
+	tabelaFrota = new TabelaInterativa({
+		colunas: FROTA_COLUNAS,
+		headerRowSelector: '#frotaHeaderRow',
+		filterRowSelector: '#frotaFilterRow',
+		bodySelector: '#frotaBody',
+		obterLinhas: construirLinhasFrota,
+		montarLinha: montarLinhaFrota,
+		sortPadrao: 'veiculo'
+	});
+
+	tabelaAgendados = new TabelaInterativa({
+		colunas: AGENDADOS_COLUNAS,
+		headerRowSelector: '#agendadosHeaderRow',
+		filterRowSelector: '#agendadosFilterRow',
+		bodySelector: '#agendadosBody',
+		obterLinhas: construirLinhasAgendados,
+		montarLinha: montarLinhaAgendados,
+		sortPadrao: 'retiradaFmt'
+	});
 
 	iniciarSincronizacao();
 
@@ -1121,9 +1496,26 @@ $(document).ready(function(){
 		verificarDisponibilidade(true);
 	});
 
+	$('#agendadosBody').on('click', '.btn-cancelar', function(){
+		abrirModalCancelar($(this).data('id'));
+	});
+	$('#modalFechar').on('click', fecharModalCancelar);
+	$('#modalMatricula').on('input', formatarMatriculaModal);
+	$('#modalConfirmar').on('click', function(){
+		if (!idParaCancelar) return;
+		var idAlvo = idParaCancelar;
+		cancelarReserva(idAlvo, function(sucesso){
+			if (sucesso) {
+				fecharModalCancelar();
+			} else {
+				$('#modalMatriculaMsg').text('Não foi possível cancelar. Tente novamente.');
+			}
+		});
+	});
+
 	setInterval(function(){
 		atualizarRelogio();
-		renderFrota();
+		renderTudo();
 	}, 15000);
 });
 </script>

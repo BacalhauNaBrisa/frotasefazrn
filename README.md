@@ -15,8 +15,9 @@
 
 Este repositório contém uma única página HTML autocontida (`index.html`) que permite:
 
-1. **Agendar** a retirada e a devolução de uma das 56 viaturas da frota, verificando em tempo real quais estão disponíveis num determinado local, período e finalidade;
-2. **Acompanhar**, ao vivo, o status de toda a frota (em uso / disponível), com filtros e ordenação por coluna.
+1. **Agendar** a retirada e a devolução de uma das 56 viaturas da frota, verificando em tempo real quais estão disponíveis num determinado local, período e finalidade — cada agendamento recebe um código único;
+2. **Gerenciar os agendamentos** já feitos, acompanhando o status de cada um (agendado, em uso, expirado ou cancelado) e cancelando quando necessário;
+3. **Acompanhar**, ao vivo, o status de toda a frota (em uso / disponível), com filtros e ordenação por coluna.
 
 Não há servidor, backend ou build: basta abrir o arquivo no navegador (ou acessá-lo via GitHub Pages). O projeto é uma ferramenta de apoio operacional interno à SUMAT, sem qualquer vínculo institucional oficial com a Sefaz/RN.
 
@@ -24,25 +25,53 @@ Não há servidor, backend ou build: basta abrir o arquivo no navegador (ou aces
 
 ### 1. Agendamento
 
-1. Informe a data e a hora de retirada e a data e a hora de devolução (fuso de Recife, UTC−3). É permitido retirar e devolver no mesmo dia.
+1. Informe a data e a hora de retirada e a data e a hora de devolução (fuso de Natal, UTC−3). É permitido retirar e devolver no mesmo dia.
 2. Digite a matrícula (7 dígitos) do servidor responsável; ela é validada automaticamente contra a listagem cadastrada e formatada como `256.410-6`.
 3. Selecione o local de retirada, o setor solicitante e a finalidade (Itinerância, Plantão ou Visita Institucional).
 4. Clique em **"Verificar disponibilidade"**. O botão só é habilitado quando todos os campos estão preenchidos e a matrícula é válida.
-5. O sistema valida se a retirada está no futuro em relação ao horário atual de Recife e lista as viaturas do local escolhido que não têm nenhuma reserva com horário sobreposto ao período solicitado.
-6. Clique no ícone verde de confirmação (✔) na linha da viatura desejada para gravar a reserva. Uma última verificação é feita nesse momento, para o caso de outra pessoa ter reservado a mesma viatura ou o horário já não estar mais no futuro.
+5. O sistema valida se a retirada está no futuro em relação ao horário atual de Natal e lista as viaturas do local escolhido que não têm nenhuma reserva ativa (não cancelada) com horário sobreposto ao período solicitado.
+6. Clique no ícone verde de confirmação (✔) na linha da viatura desejada para gravar a reserva. Uma última verificação é feita nesse momento, para o caso de outra pessoa ter reservado a mesma viatura ou o horário já não estar mais no futuro. Ao confirmar, o sistema exibe o **código do agendamento** gerado (ver seção [Código de agendamento](#código-de-agendamento) abaixo).
 
-### 2. Frota de veículos
+### 2. Agendados
 
-Logo abaixo, a tabela "Frota de veículos" mostra o status ao vivo das 56 viaturas — recalculado automaticamente a cada 15 segundos e a cada nova reserva —, incluindo veículo, placa, caracterização, local de lotação, propriedade, status (**EM USO**, em vermelho, ou **DISPONÍVEL**, em verde), responsável, setor solicitante, finalidade e datas/horas de retirada e devolução. Clique no título de qualquer coluna para ordenar (crescente/decrescente) e use os campos logo abaixo dos títulos para filtrar por texto ou por valor.
+O módulo "Agendados", entre os dashboards de agendamento e de frota, lista **todos** os agendamentos já registrados (independentemente do local), com: código do agendamento, veículo, placa, caracterização, local de lotação, propriedade, status, responsável, setor solicitante, finalidade, datas/horas de retirada e devolução, e uma coluna de cancelamento. Assim como a tabela de frota, é ordenável clicando no título de cada coluna e filtrável pelos campos logo abaixo dos títulos.
+
+O campo **status** desse módulo é calculado em tempo real e é diferente do status mostrado no dashboard de frota:
+
+| Status | Quando ocorre | Cor da linha |
+|---|---|---|
+| `AGENDADO` | a retirada ainda não chegou | verde |
+| `EM USO` | a retirada já começou e a devolução ainda não chegou | amarelo |
+| `EXPIRADO` | a devolução já chegou | cinza |
+| `CANCELADO` | o responsável cancelou o agendamento | vermelho |
+
+Para cancelar um agendamento ainda `AGENDADO` ou `EM USO`, clique no ✕ vermelho da coluna "Cancelar"; o sistema pede a matrícula do responsável pelo agendamento original e só libera a confirmação quando ela confere. Agendamentos `EXPIRADO` ou já `CANCELADO` não exibem o botão de cancelar. O cancelamento não apaga o registro: o código do agendamento permanece gravado, inclusive para efeito do limite diário de 99 agendamentos por matrícula (ver abaixo).
+
+### 3. Frota de veículos
+
+Logo abaixo, a tabela "Frota de veículos" mostra o status ao vivo das 56 viaturas — recalculado automaticamente a cada 15 segundos e a cada nova reserva ou cancelamento —, incluindo veículo, placa, caracterização, local de lotação, propriedade, status (**EM USO**, em amarelo, ou **DISPONÍVEL**, em verde), responsável, setor solicitante, finalidade e datas/horas de retirada e devolução. Clique no título de qualquer coluna para ordenar (crescente/decrescente) e use os campos logo abaixo dos títulos para filtrar por texto ou por valor. Reservas canceladas não contam para o status "EM USO".
+
+## Código de agendamento
+
+Cada agendamento confirmado recebe um código no formato:
+
+```
+<matrícula (7 dígitos)><ano><mês><dia><sequencial de 01 a 99>
+```
+
+onde ano/mês/dia correspondem à data em que o agendamento foi **efetivamente registrado** no sistema (não às datas de retirada/devolução escolhidas), no fuso de Natal, e o sequencial é a ordem daquele agendamento entre todos os que aquela mesma matrícula já fez naquele mesmo dia — contando também os cancelados, já que o código permanece gravado mesmo após o cancelamento.
+
+**Exemplo:** o servidor de matrícula `256.033-0` registra um agendamento às 23:57 (horário do sistema) do dia 31/12/2026, sendo esse o primeiro agendamento feito por ele nesse dia: o código gerado é `25603302026123101`. Se, ainda no mesmo dia, ele registrar outro agendamento às 23:59, o código será `25603302026123102`. Se, no dia seguinte (01/01/2027), às 00:03, ele fizer o primeiro agendamento daquele novo dia, o código será `25603302027010101`. Como o sequencial vai de `01` a `99`, uma mesma matrícula não pode registrar mais de 99 agendamentos (confirmados ou cancelados) em um mesmo dia.
 
 ## Lógica de disponibilidade
 
 Todo o cálculo roda **no navegador do usuário**, em JavaScript puro (nenhum dado é processado em um servidor próprio).
 
 - Uma viatura é candidata se estiver lotada no local selecionado.
-- Uma viatura candidata é considerada **disponível** para o período solicitado se nenhuma reserva já registrada para ela tiver sobreposição de horário com o período pedido (retirada₁ < devolução₂ **e** retirada₂ < devolução₁).
-- No dashboard "Frota de veículos", o status **EM USO** é atribuído, em tempo real, à viatura que tiver uma reserva cujo intervalo [retirada, devolução) contenha o instante atual (horário de Recife); caso contrário, o status é **DISPONÍVEL**.
-- Todas as datas/horas informadas nos formulários são interpretadas como horário de Recife (UTC−3 fixo, já que o Brasil não adota mais horário de verão), independentemente do fuso horário do dispositivo de quem estiver usando a página.
+- Uma viatura candidata é considerada **disponível** para o período solicitado se nenhuma reserva ativa (não cancelada) já registrada para ela tiver sobreposição de horário com o período pedido (retirada₁ < devolução₂ **e** retirada₂ < devolução₁).
+- No dashboard "Frota de veículos", o status **EM USO** é atribuído, em tempo real, à viatura que tiver uma reserva ativa cujo intervalo [retirada, devolução) contenha o instante atual (horário de Natal); caso contrário, o status é **DISPONÍVEL**.
+- No dashboard "Agendados", o status de cada agendamento (`AGENDADO` / `EM USO` / `EXPIRADO`) é recalculado da mesma forma a partir do instante atual, a menos que o agendamento tenha sido cancelado, caso em que o status é sempre `CANCELADO`.
+- Todas as datas/horas informadas nos formulários são interpretadas como horário de Natal (UTC−3 fixo, já que o Brasil não adota mais horário de verão), independentemente do fuso horário do dispositivo de quem estiver usando a página. Internamente, o cálculo usa o identificador técnico de fuso horário `America/Recife`, que corresponde ao mesmo horário civil de Natal/RN.
 
 ### Persistência
 
@@ -84,7 +113,7 @@ Essa configuração precisa ser feita uma única vez, por qualquer pessoa com um
 8. Abra o arquivo `index.html` deste repositório e localize o bloco `var FIREBASE_CONFIG = { ... }`, no início do `<script>` final da página. Substitua os valores de exemplo pelos valores copiados no passo 7.
 9. Salve, faça o commit e o push do `index.html` atualizado para o repositório — o GitHub Pages publica a nova versão automaticamente em alguns minutos.
 
-A partir daí, a barra de status acima do formulário de agendamento passa a exibir **"Sincronizado com todos os usuários"** (em vez de "Modo local"), e qualquer reserva feita por alguém aparece, em tempo real, para todas as outras pessoas com a página aberta.
+A partir daí, a barra de status acima do formulário de agendamento passa a exibir **"Sincronizado com todos os usuários"** (em vez de "Modo local"), e qualquer reserva ou cancelamento feito por alguém aparece, em tempo real, para todas as outras pessoas com a página aberta.
 
 ## Dados cadastrados
 
@@ -100,7 +129,7 @@ Qualquer alteração nessas listas (troca de servidor, movimentação de viatura
 
 - **HTML5** — estrutura da página, em arquivo único (`index.html`).
 - **CSS3** puro — sem framework; variáveis CSS (`:root`) para cores/tema, tabelas com colunas fixas (`position: sticky`) para o cabeçalho e a linha de filtros do dashboard de frota, e fontes do Google Fonts (*Space Grotesk*, *Inter*, *JetBrains Mono* para números e placas).
-- **JavaScript (ES5/ES6)** — geração dos formulários e da tabela de frota, validação de matrícula, cálculo de disponibilidade por sobreposição de horário e ordenação/filtro das colunas.
+- **JavaScript (ES5/ES6)** — geração dos formulários e das tabelas de frota e de agendados, validação de matrícula, geração do código de agendamento, cálculo de disponibilidade por sobreposição de horário, cancelamento de agendamentos e ordenação/filtro das colunas (através de um pequeno componente `TabelaInterativa` reaproveitado pelos dois dashboards).
 - **jQuery 3.7** (via CDN) — manipulação do DOM e eventos que disparam a atualização automática.
 - **Firebase Realtime Database** (via CDN, SDK compat) — sincronização em tempo real das reservas entre todos os usuários que acessam a página; com `localStorage` como reserva local enquanto o Firebase não estiver configurado.
 - **GitHub Pages** — hospedagem estática, sem backend próprio, sem build step, sem dependências instaladas: o repositório é publicado como está.
