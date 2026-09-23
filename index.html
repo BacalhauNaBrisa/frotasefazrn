@@ -339,7 +339,39 @@ table.avail tbody tr:hover td{background:var(--cream-100);}
 	transition:background .15s;
 }
 .btn-cancelar:hover{background:#f5d9d0;}
+.btn-devolver{
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	width:28px;
+	height:28px;
+	border-radius:50%;
+	border:1.5px solid var(--navy-700);
+	background:#e7edf6;
+	color:var(--navy-700);
+	cursor:pointer;
+	transition:background .15s;
+}
+.btn-devolver:hover{background:#d7e1f0;}
 .dash{color:var(--ink-400);}
+.modal-box textarea{
+	width:100%;
+	font:inherit;
+	font-size:13.5px;
+	padding:9px 10px;
+	border:1.5px solid var(--line);
+	border-radius:6px;
+	background:#fff;
+	color:var(--ink-900);
+	resize:vertical;
+	transition:border-color .15s;
+}
+.modal-box textarea:focus{
+	outline:none;
+	border-color:var(--navy-700);
+	box-shadow:0 0 0 3px rgba(39,75,125,.15);
+}
+.modal-box .form-grid{margin-bottom:0;}
 .empty-note{
 	font-size:12.5px;
 	color:var(--ink-400);
@@ -469,11 +501,15 @@ table.datatable tbody tr.row-cancelado:hover td{background:#f5d9d0;}
 	border-radius:var(--radius);
 	box-shadow:var(--shadow);
 	padding:22px 24px;
-	max-width:380px;
+	max-width:440px;
 	width:100%;
+	max-height:88vh;
+	overflow:auto;
 }
 .modal-box h3{font-size:16px; margin-bottom:10px;}
 .modal-text{font-size:13px; color:var(--ink-600); margin-bottom:14px; line-height:1.5;}
+.modal-resumo p{margin:4px 0; font-size:13px; color:var(--ink-600);}
+.modal-resumo p b{color:var(--navy-950);}
 .modal-actions{
 	display:flex;
 	justify-content:flex-end;
@@ -564,7 +600,7 @@ footer a{color:var(--ink-600);}
 			<h3>Viaturas disponíveis</h3>
 			<table class="avail" id="tblAvail">
 				<thead>
-					<tr><th>Veículo</th><th>Placa</th><th>Caracterizada</th><th>Lotado</th><th>Propriedade</th><th>Reservar</th></tr>
+					<tr><th>Veículo</th><th>Lotado</th><th>Placa</th><th>Caracterizada</th><th>Propriedade</th><th>Reservar</th></tr>
 				</thead>
 				<tbody></tbody>
 			</table>
@@ -635,6 +671,58 @@ footer a{color:var(--ink-600);}
 	</div>
 </div>
 
+<div class="modal-overlay hidden" id="modalConfirmarAgendamento">
+	<div class="modal-box">
+		<h3>Confirmar agendamento</h3>
+		<div class="modal-resumo" id="confirmResumo"></div>
+		<div class="field-msg" id="confirmMsg"></div>
+		<div class="modal-actions" id="confirmAcoesPendente">
+			<button type="button" class="btn-secondary" id="confirmVoltar">Voltar</button>
+			<button type="button" class="btn-primary" id="confirmConfirmar">Confirmar agendamento</button>
+		</div>
+		<div class="hidden" id="confirmSucesso">
+			<div class="form-alert success" id="confirmCodigoBox"></div>
+			<div class="modal-actions">
+				<button type="button" class="btn-secondary" id="confirmFechar">Fechar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal-overlay hidden" id="modalDevolucao">
+	<div class="modal-box">
+		<h3>Registrar devolução</h3>
+		<p class="modal-text">Código: <b id="devolucaoCodigo" class="num"></b></p>
+		<div class="form-grid" style="grid-template-columns:1fr 1fr;">
+			<div class="field">
+				<label for="devInpData">Data de devolução</label>
+				<input type="date" id="devInpData"/>
+			</div>
+			<div class="field">
+				<label for="devInpHora">Hora de devolução</label>
+				<input type="time" id="devInpHora" step="60"/>
+			</div>
+			<div class="field">
+				<label for="devInpKmIni">Quilometragem inicial (km)</label>
+				<input type="number" id="devInpKmIni" min="0" step="1"/>
+			</div>
+			<div class="field">
+				<label for="devInpKmFim">Quilometragem final (km)</label>
+				<input type="number" id="devInpKmFim" min="0" step="1"/>
+			</div>
+		</div>
+		<div class="field" style="margin-top:12px;">
+			<label for="devInpObs">Observação</label>
+			<textarea id="devInpObs" rows="3"></textarea>
+		</div>
+		<div class="field-msg" id="devolucaoMsg" style="margin-top:6px;"></div>
+		<div class="modal-actions">
+			<button type="button" class="btn-secondary" id="devolucaoFechar">Voltar</button>
+			<button type="button" class="btn-primary" id="devolucaoConfirmar">Registrar devolução</button>
+		</div>
+	</div>
+</div>
+
 <script>
 // ======================= DADOS =======================
 
@@ -695,7 +783,89 @@ var SERVIDORES = [
 	{ nome:"Tarcisio",         matricula:"2564041" },
 	{ nome:"Thiago Bastos",    matricula:"2563800" },
 	{ nome:"Thiago Lima",      matricula:"2562278" },
-	{ nome:"Walber",           matricula:"2564424" }
+	{ nome:"Walber",           matricula:"2564424" },
+
+	// Servidores adicionados a partir da listagem "solicitantes.xlsx" (condutores)
+	{ nome:"Alessandre Nunes Ribeiro",               matricula:"1909096" },
+	{ nome:"Alexandre Magno Rocha Azevedo",          matricula:"2014505" },
+	{ nome:"Antônio Alves Severiano",                matricula:"2036354" },
+	{ nome:"Antônio Ferreira de Lima Júnior",        matricula:"1602268" },
+	{ nome:"Carlos Alberto Pereira de Melo",         matricula:"0089125" },
+	{ nome:"Claudener Renato Fernandes",             matricula:"0121657" },
+	{ nome:"Clayton Gil Maia de Almeida",            matricula:"2039214" },
+	{ nome:"Cléciton George Moura da Silva",         matricula:"1909002" },
+	{ nome:"Cosme Alves Ribeiro",                    matricula:"0825743" },
+	{ nome:"Denise Leite de Assis",                  matricula:"0964565" },
+	{ nome:"Edson Moreira da Silva",                 matricula:"1645730" },
+	{ nome:"Emerson Alves Silva",                    matricula:"1945327" },
+	{ nome:"Felinto de Paiva Gadelha Neto",          matricula:"1582941" },
+	{ nome:"Francisco Canindé Benedito de Almeida",  matricula:"0766690" },
+	{ nome:"Francisco Cesário da Costa Filho",       matricula:"1603914" },
+	{ nome:"Francisco da Chagas Tavares",            matricula:"1602527" },
+	{ nome:"Francisco Edson de Medeiros Silva",      matricula:"2011891" },
+	{ nome:"Francisco Eliésio Granja",               matricula:"2011930" },
+	{ nome:"Francisco Ermano Barbosa Lima",          matricula:"1537130" },
+	{ nome:"Francisco Evangelista Neto",             matricula:"0870854" },
+	{ nome:"Freud Ferreira de Morais",               matricula:"1601482" },
+	{ nome:"Genibaldo de Barros",                    matricula:"1601504" },
+	{ nome:"Gil Fábio Aquino de Oliveira",           matricula:"2567733" },
+	{ nome:"Henrique Ricardo Freitas de Souza",      matricula:"0963224" },
+	{ nome:"Hermano Augusto Aleixo de Lucena",       matricula:"1945360" },
+	{ nome:"Hildemar Câmara de Araújo",              matricula:"0880191" },
+	{ nome:"Isabel Christina Santos Napoli",         matricula:"2048523" },
+	{ nome:"Ítalo de Almeida Queiroga",              matricula:"2068168" },
+	{ nome:"Ivan Loiola Citó Filho",                 matricula:"1909525" },
+	{ nome:"Ivanaldo Batista de Andrade",            matricula:"0884596" },
+	{ nome:"João Manoel dos Santos",                 matricula:"0968307" },
+	{ nome:"Jonas Machado Coutinho",                 matricula:"1909215" },
+	{ nome:"Jorge Luiz Porto Gurgel",                matricula:"1586335" },
+	{ nome:"José Leão de Brito",                     matricula:"0916668" },
+	{ nome:"José Lenilson Nunes Diniz",              matricula:"2011824" },
+	{ nome:"José Luiz da Silva Júnior",              matricula:"1530208" },
+	{ nome:"José Luiz Fernandes",                    matricula:"0994553" },
+	{ nome:"José Rubens Araújo Lima",                matricula:"1539817" },
+	{ nome:"Joseph Charles Gonçalves Alves",         matricula:"1525913" },
+	{ nome:"Juarez Gomes de Brito",                  matricula:"1947125" },
+	{ nome:"Juvino Eduardo Neto",                    matricula:"1605798" },
+	{ nome:"Lenilton Moura Vasconcelos",             matricula:"1601679" },
+	{ nome:"Levany de Freitas Júnior",               matricula:"1602896" },
+	{ nome:"Lilian Regina de Souza Marinho",         matricula:"2011905" },
+	{ nome:"Lívio Sampaio Colares",                  matricula:"1515519" },
+	{ nome:"Luciano Fortes de Castro",               matricula:"1909436" },
+	{ nome:"Luciano Pessoa de Souza",                matricula:"1601717" },
+	{ nome:"Luiz Eduardo do Nascimento Farias",      matricula:"1945874" },
+	{ nome:"Maicon Evandro de Oliveira Cruz",        matricula:"1909274" },
+	{ nome:"Manoel Sabino Filho",                    matricula:"1530755" },
+	{ nome:"Manoel Temóteo Dantas",                  matricula:"0963003" },
+	{ nome:"Marcelo Lima de Morais",                 matricula:"1681257" },
+	{ nome:"Mável Adriano Pinheiro de Lima",         matricula:"1601865" },
+	{ nome:"Miciel Brito de Melo",                   matricula:"0840157" },
+	{ nome:"Paulo Roberto da Costa Elias",           matricula:"1603299" },
+	{ nome:"Radir Carneiro de Oliveira",             matricula:"1770322" },
+	{ nome:"Rainério Lopes Costa",                   matricula:"0379662" },
+	{ nome:"Ramises Ramman Macedo Alves",            matricula:"0976105" },
+	{ nome:"Rênio Palmeira de Araújo",               matricula:"0088013" },
+	{ nome:"Robério Marques Barreto",                matricula:"2013592" },
+	{ nome:"Robson Gonzaga Gê",                      matricula:"2039346" },
+	{ nome:"Sadraque Manoel de Sousa",               matricula:"1681265" },
+	{ nome:"Sideoni Jeferson da Silva Lins",         matricula:"2508273" },
+	{ nome:"Uilton Pereira Costa",                   matricula:"1600931" },
+	{ nome:"Williams Gomes da Rocha",                matricula:"1604880" },
+	{ nome:"HERLON EMANOEL RAMOS PAIVA",             matricula:"1530470" },
+	{ nome:"ADRIANA ASSUNÇÃO SILVA",                 matricula:"1630482" },
+	{ nome:"MARCELO MONTEIRO E MONTEIRO",            matricula:"1908871" },
+	{ nome:"ADENILTON PINHEIRO BARROS",              matricula:"1515551" },
+	{ nome:"FRANCISCO JORGE SILVEIRA RODRIGUES",     matricula:"1586718" },
+	{ nome:"ISRAEL PAULINO DA SILVA JUNIOR",         matricula:"1531794" },
+	{ nome:"FRANCISCO MÁRCIO BEZERRA CAVALCANTI",    matricula:"1910051" },
+	{ nome:"VALERIANO OTAVIANO DE ALMEIDA",          matricula:"1945386" },
+	{ nome:"FRANCISCO HERMENELUCE VASCO FERNANDES",  matricula:"1533916" },
+	{ nome:"LEONOR LAURENTINA VIEIRA PINHEIRO PITA", matricula:"1225677" },
+	{ nome:"GENIVALDO DE OLIVEIRA DUTRA",            matricula:"1602594" },
+	{ nome:"JOSÉ RENATO PINHEIRO CAVALCANTE",        matricula:"2213745" },
+	{ nome:"LINOMÉRICO ALVES RODRIGUES",             matricula:"1961721" },
+	{ nome:"FERNANDO LUIZ BORGES DA SILVA",          matricula:"1682075" },
+	{ nome:"ROBERTO AQUINO DE ARAUJO",               matricula:"1603337" },
 ];
 var SERVIDOR_BY_MAT = {};
 SERVIDORES.forEach(function(s){ SERVIDOR_BY_MAT[s.matricula] = s; });
@@ -779,13 +949,13 @@ var PROPRIEDADES_DISTINTAS = Array.from(new Set(VEICULOS.map(function(v){ return
 // visível na página.
 
 var FIREBASE_CONFIG = {
-	apiKey: "AIzaSyA2rbUa7NdXo6H-TSYWyD8Esauct7Bigik",
-	authDomain: "frotasefazrn.firebaseapp.com",
-	databaseURL: "https://frotasefazrn-default-rtdb.firebaseio.com",
-	projectId: "frotasefazrn",
-	storageBucket: "frotasefazrn.firebasestorage.app",
-	messagingSenderId: "318943696552",
-	appId: "1:318943696552:web:c202024a5d6da66cfcd49d"
+	apiKey: "SUA_API_KEY_AQUI",
+	authDomain: "SEU_PROJETO.firebaseapp.com",
+	databaseURL: "https://SEU_PROJETO-default-rtdb.firebaseio.com",
+	projectId: "SEU_PROJETO",
+	storageBucket: "SEU_PROJETO.appspot.com",
+	messagingSenderId: "000000000000",
+	appId: "1:000000000000:web:0000000000000000000000"
 };
 
 var FIREBASE_PATH = 'reservas'; // não altere: caminho usado dentro do banco de dados
@@ -872,21 +1042,23 @@ function gravarReserva(reserva, callback) {
 	}
 }
 
-function cancelarReserva(id, callback) {
-	var patch = { cancelado: true, canceladoEm: new Date().toISOString() };
+function atualizarCamposReserva(id, patch, callback) {
 	if (firebaseAtivo && db) {
 		db.ref(FIREBASE_PATH + '/' + id).update(patch, function(erro) {
 			callback(!erro);
 		});
 	} else {
 		if (reservas[id]) {
-			reservas[id].cancelado = true;
-			reservas[id].canceladoEm = patch.canceladoEm;
+			Object.keys(patch).forEach(function(k){ reservas[id][k] = patch[k]; });
 			saveStateLocal();
 			renderTudo();
 		}
 		callback(true);
 	}
+}
+
+function cancelarReserva(id, callback) {
+	atualizarCamposReserva(id, { cancelado: true, canceladoEm: new Date().toISOString() }, callback);
 }
 
 function loadStateLocal() {
@@ -1084,9 +1256,9 @@ function renderDisponiveis(disponiveis, retirada, devolucao, local) {
 	disponiveis.forEach(function(v){
 		var $row = $('<tr>').attr('data-placa', v.placa);
 		$row.append('<td>' + v.veiculo + '</td>');
+		$row.append('<td>' + v.lotado + '</td>');
 		$row.append('<td class="num">' + v.placa + '</td>');
 		$row.append('<td>' + v.caracterizada + '</td>');
-		$row.append('<td>' + v.lotado + '</td>');
 		$row.append('<td>' + v.propriedade + '</td>');
 		var $btn = $('<button type="button" class="btn-reservar" title="Reservar esta viatura">' +
 			'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>');
@@ -1096,13 +1268,52 @@ function renderDisponiveis(disponiveis, retirada, devolucao, local) {
 
 	$tbody.off('click', '.btn-reservar').on('click', '.btn-reservar', function(){
 		var placa = $(this).closest('tr').data('placa');
-		reservarViatura(placa, retirada, devolucao, local);
+		abrirModalConfirmarAgendamento(placa, retirada, devolucao, local);
 	});
 }
 
-function reservarViatura(placa, retirada, devolucao, local) {
+// ======================= MODAL DE CONFIRMAÇÃO DE AGENDAMENTO =======================
+
+var pendingReserva = null;
+
+function abrirModalConfirmarAgendamento(placa, retirada, devolucao, local) {
+	pendingReserva = { placa: placa, retirada: retirada, devolucao: devolucao, local: local };
+
+	var v = VEICULO_BY_PLACA[placa];
+	var digitos = $('#inpMatricula').val().replace(/\D/g, '');
+	var servidor = SERVIDOR_BY_MAT[digitos];
+
+	var resumoHtml = ''
+		+ '<p><b>Veículo:</b> ' + v.veiculo + '</p>'
+		+ '<p><b>Lotado:</b> ' + local + '</p>'
+		+ '<p><b>Placa:</b> ' + v.placa + '</p>'
+		+ '<p><b>Setor solicitante:</b> ' + $('#selSetor').val() + '</p>'
+		+ '<p><b>Finalidade:</b> ' + $('#selFinalidade').val() + '</p>'
+		+ '<p><b>Responsável:</b> ' + servidor.nome + ' (' + $('#inpMatricula').val() + ')</p>'
+		+ '<p><b>Retirada:</b> ' + formatDataHoraRecife(retirada) + '</p>'
+		+ '<p><b>Devolução:</b> ' + formatDataHoraRecife(devolucao) + '</p>';
+
+	$('#confirmResumo').html(resumoHtml);
+	$('#confirmMsg').text('');
+	$('#confirmAcoesPendente').removeClass('hidden');
+	$('#confirmSucesso').addClass('hidden');
+	$('#confirmConfirmar').prop('disabled', false);
+	$('#modalConfirmarAgendamento').removeClass('hidden');
+}
+
+function fecharModalConfirmarAgendamento() {
+	$('#modalConfirmarAgendamento').addClass('hidden');
+	pendingReserva = null;
+}
+
+function confirmarAgendamentoPendente() {
+	if (!pendingReserva) return;
+	var placa = pendingReserva.placa, retirada = pendingReserva.retirada,
+		devolucao = pendingReserva.devolucao, local = pendingReserva.local;
 	var agora = new Date();
+
 	if (retirada.getTime() <= agora.getTime()) {
+		fecharModalConfirmarAgendamento();
 		mostrarAlertaAgendamento('error', 'Não foi possível concluir: a data/hora de retirada já não está mais no futuro. Ajuste o agendamento e verifique a disponibilidade novamente.');
 		return;
 	}
@@ -1112,6 +1323,7 @@ function reservarViatura(placa, retirada, devolucao, local) {
 		return r.placa === placa && overlap(retirada, devolucao, new Date(r.retirada), new Date(r.devolucao));
 	});
 	if (conflito) {
+		fecharModalConfirmarAgendamento();
 		mostrarAlertaAgendamento('error', 'Esta viatura acabou de ser reservada por outra pessoa para um período conflitante. Verifique a disponibilidade novamente.');
 		verificarDisponibilidade(false);
 		return;
@@ -1123,6 +1335,7 @@ function reservarViatura(placa, retirada, devolucao, local) {
 
 	var codigo = gerarCodigoAgendamento(digitos, agora);
 	if (!codigo) {
+		fecharModalConfirmarAgendamento();
 		mostrarAlertaAgendamento('error', 'Limite de 99 agendamentos no dia de hoje foi atingido para esta matrícula (o limite inclui agendamentos já cancelados).');
 		return;
 	}
@@ -1142,12 +1355,85 @@ function reservarViatura(placa, retirada, devolucao, local) {
 		cancelado: false
 	};
 
+	$('#confirmConfirmar').prop('disabled', true);
 	gravarReserva(reserva, function(sucesso){
+		$('#confirmConfirmar').prop('disabled', false);
 		if (sucesso) {
-			mostrarAlertaAgendamento('success', 'Reserva confirmada para a viatura ' + v.veiculo + ' (' + placa + '). Código do agendamento: <span class="codigo-gerado">' + codigo + '</span>.');
-			verificarDisponibilidade(false);
+			// requisito: recolhe a tabela de "Viaturas disponíveis" assim que o
+			// agendamento é confirmado e o código gerado é exibido.
+			$('#availWrap').addClass('hidden');
+			limparAlertaAgendamento();
+
+			$('#confirmAcoesPendente').addClass('hidden');
+			$('#confirmCodigoBox').html('Reserva confirmada para a viatura ' + v.veiculo + ' (' + placa + ').<br/>Código do agendamento: <span class="codigo-gerado">' + codigo + '</span>.');
+			$('#confirmSucesso').removeClass('hidden');
 		} else {
-			mostrarAlertaAgendamento('error', 'Não foi possível gravar a reserva. Tente novamente.');
+			$('#confirmMsg').text('Não foi possível gravar a reserva. Tente novamente.');
+		}
+	});
+}
+
+// ======================= MODAL DE REGISTRO DE DEVOLUÇÃO MANUAL =======================
+
+var idParaDevolucao = null;
+
+function abrirModalDevolucao(id) {
+	var r = reservas[id];
+	if (!r) return;
+	idParaDevolucao = id;
+
+	var retiradaDate = new Date(r.retirada);
+	$('#devolucaoCodigo').text(r.codigo || '-');
+	$('#devInpData').attr('min', recifeDateParts(retiradaDate).iso)
+		.val(r.devolucaoManual ? recifeDateParts(new Date(r.devolucaoManual)).iso : '');
+	$('#devInpHora').val(r.devolucaoManual ? new Intl.DateTimeFormat('pt-BR', {
+		timeZone: 'America/Recife', hour: '2-digit', minute: '2-digit', hour12: false
+	}).format(new Date(r.devolucaoManual)) : '');
+	$('#devInpKmIni').val(r.kmInicial !== undefined && r.kmInicial !== null ? r.kmInicial : '');
+	$('#devInpKmFim').val(r.kmFinal !== undefined && r.kmFinal !== null ? r.kmFinal : '');
+	$('#devInpObs').val(r.observacao || '');
+	$('#devolucaoMsg').text('');
+	$('#devolucaoConfirmar').prop('disabled', false);
+	$('#modalDevolucao').removeClass('hidden');
+}
+
+function fecharModalDevolucao() {
+	$('#modalDevolucao').addClass('hidden');
+	idParaDevolucao = null;
+}
+
+function confirmarDevolucaoManual() {
+	var r = idParaDevolucao ? reservas[idParaDevolucao] : null;
+	if (!r) return;
+
+	var dataHora = parseDataHoraRecife($('#devInpData').val(), $('#devInpHora').val());
+	if (!dataHora) {
+		$('#devolucaoMsg').text('Informe a data e a hora de devolução.');
+		return;
+	}
+	var retiradaDate = new Date(r.retirada);
+	if (dataHora.getTime() <= retiradaDate.getTime()) {
+		$('#devolucaoMsg').text('A data/hora de devolução precisa ser depois da data/hora de retirada (' + formatDataHoraRecife(retiradaDate) + ').');
+		return;
+	}
+
+	var kmIniVal = $('#devInpKmIni').val();
+	var kmFimVal = $('#devInpKmFim').val();
+	var patch = {
+		devolucaoManual: dataHora.toISOString(),
+		kmInicial: kmIniVal !== '' ? Number(kmIniVal) : null,
+		kmFinal: kmFimVal !== '' ? Number(kmFimVal) : null,
+		observacao: $('#devInpObs').val() || ''
+	};
+
+	var idAlvo = idParaDevolucao;
+	$('#devolucaoConfirmar').prop('disabled', true);
+	atualizarCamposReserva(idAlvo, patch, function(sucesso){
+		$('#devolucaoConfirmar').prop('disabled', false);
+		if (sucesso) {
+			fecharModalDevolucao();
+		} else {
+			$('#devolucaoMsg').text('Não foi possível registrar a devolução. Tente novamente.');
 		}
 	});
 }
@@ -1258,9 +1544,9 @@ TabelaInterativa.prototype.render = function() {
 
 var FROTA_COLUNAS = [
 	{ id:'veiculo',     titulo:'Veículo',               tipo:'texto' },
+	{ id:'lotado',      titulo:'Lotado',                tipo:'select', opcoes: LOCAIS },
 	{ id:'placa',       titulo:'Placa',                 tipo:'texto' },
 	{ id:'caracterizada', titulo:'Caracterizada',       tipo:'select', opcoes: CARACTERIZADAS_DISTINTAS },
-	{ id:'lotado',      titulo:'Lotado',                tipo:'select', opcoes: LOCAIS },
 	{ id:'propriedade', titulo:'Propriedade',           tipo:'select', opcoes: PROPRIEDADES_DISTINTAS },
 	{ id:'status',      titulo:'Status',                tipo:'select', opcoes: ['DISPONÍVEL','EM USO'] },
 	{ id:'responsavel', titulo:'Responsável',           tipo:'texto' },
@@ -1308,9 +1594,9 @@ function montarLinhaFrota(l) {
 	var pillClasse = l.status === 'EM USO' ? 'uso' : 'disponivel';
 	var $row = $('<tr>').addClass(classe);
 	$row.append('<td>' + l.veiculo + '</td>');
+	$row.append('<td>' + l.lotado + '</td>');
 	$row.append('<td class="num">' + l.placa + '</td>');
 	$row.append('<td>' + l.caracterizada + '</td>');
-	$row.append('<td>' + l.lotado + '</td>');
 	$row.append('<td>' + l.propriedade + '</td>');
 	$row.append('<td><span class="status-pill ' + pillClasse + '">' + l.status + '</span></td>');
 	$row.append('<td>' + l.responsavel + '</td>');
@@ -1333,9 +1619,9 @@ function renderFrota() {
 var AGENDADOS_COLUNAS = [
 	{ id:'codigo',      titulo:'Código do agendamento', tipo:'texto' },
 	{ id:'veiculo',     titulo:'Veículo',               tipo:'texto' },
+	{ id:'lotado',      titulo:'Lotado',                tipo:'select', opcoes: LOCAIS },
 	{ id:'placa',       titulo:'Placa',                 tipo:'texto' },
 	{ id:'caracterizada', titulo:'Caracterizada',       tipo:'select', opcoes: CARACTERIZADAS_DISTINTAS },
-	{ id:'lotado',      titulo:'Lotado',                tipo:'select', opcoes: LOCAIS },
 	{ id:'propriedade', titulo:'Propriedade',           tipo:'select', opcoes: PROPRIEDADES_DISTINTAS },
 	{ id:'status',      titulo:'Status',                tipo:'select', opcoes: ['AGENDADO','EM USO','EXPIRADO','CANCELADO'] },
 	{ id:'responsavel', titulo:'Responsável',           tipo:'texto' },
@@ -1343,6 +1629,10 @@ var AGENDADOS_COLUNAS = [
 	{ id:'finalidade',  titulo:'Finalidade',            tipo:'select', opcoes: FINALIDADES },
 	{ id:'retiradaFmt', titulo:'Data/hora de retirada', tipo:'texto', sortValue:function(l){ return l.retirada; } },
 	{ id:'devolucaoFmt',titulo:'Data/hora de devolução',tipo:'texto', sortValue:function(l){ return l.devolucao; } },
+	{ id:'devolucaoManualFmt', titulo:'Data/hora de devolução (baixa manual)', tipo:'texto', sortValue:function(l){ return l.devolucaoManual; } },
+	{ id:'observacao',  titulo:'Observação',            tipo:'texto' },
+	{ id:'canceladoEmFmt', titulo:'Data/hora de cancelamento', tipo:'texto', sortValue:function(l){ return l.canceladoEm; } },
+	{ id:'registrarDevolucao', titulo:'Registrar devolução', tipo:'acao' },
 	{ id:'cancelar',    titulo:'Cancelar',              tipo:'acao' }
 ];
 
@@ -1376,7 +1666,13 @@ function construirLinhasAgendados() {
 			devolucao: new Date(r.devolucao),
 			retiradaFmt: formatDataHoraRecife(new Date(r.retirada)),
 			devolucaoFmt: formatDataHoraRecife(new Date(r.devolucao)),
-			cancelavel: (status === 'AGENDADO' || status === 'EM USO')
+			devolucaoManual: r.devolucaoManual ? new Date(r.devolucaoManual) : null,
+			devolucaoManualFmt: r.devolucaoManual ? formatDataHoraRecife(new Date(r.devolucaoManual)) : '-',
+			observacao: r.observacao ? r.observacao : '-',
+			canceladoEm: r.canceladoEm ? new Date(r.canceladoEm) : null,
+			canceladoEmFmt: r.canceladoEm ? formatDataHoraRecife(new Date(r.canceladoEm)) : '-',
+			cancelavel: (status === 'AGENDADO' || status === 'EM USO'),
+			podeRegistrarDevolucao: (!r.cancelado && !r.devolucaoManual && (status === 'EM USO' || status === 'EXPIRADO'))
 		};
 	});
 }
@@ -1388,9 +1684,9 @@ function montarLinhaAgendados(l) {
 	var $row = $('<tr>').addClass(STATUS_AGENDADOS_CLASSE[l.status]).attr('data-id', l.id);
 	$row.append('<td class="num">' + l.codigo + '</td>');
 	$row.append('<td>' + l.veiculo + '</td>');
+	$row.append('<td>' + l.lotado + '</td>');
 	$row.append('<td class="num">' + l.placa + '</td>');
 	$row.append('<td>' + l.caracterizada + '</td>');
-	$row.append('<td>' + l.lotado + '</td>');
 	$row.append('<td>' + l.propriedade + '</td>');
 	$row.append('<td><span class="status-pill ' + STATUS_AGENDADOS_PILL[l.status] + '">' + l.status + '</span></td>');
 	$row.append('<td>' + l.responsavel + '</td>');
@@ -1398,6 +1694,18 @@ function montarLinhaAgendados(l) {
 	$row.append('<td>' + l.finalidade + '</td>');
 	$row.append('<td class="num">' + l.retiradaFmt + '</td>');
 	$row.append('<td class="num">' + l.devolucaoFmt + '</td>');
+	$row.append('<td class="num">' + l.devolucaoManualFmt + '</td>');
+	$row.append('<td>' + l.observacao + '</td>');
+	$row.append('<td class="num">' + l.canceladoEmFmt + '</td>');
+
+	var $tdDevolucao = $('<td>');
+	if (l.podeRegistrarDevolucao) {
+		$tdDevolucao.append('<button type="button" class="btn-devolver" title="Registrar devolução" data-id="' + l.id + '">' +
+			'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg></button>');
+	} else {
+		$tdDevolucao.append('<span class="dash">—</span>');
+	}
+	$row.append($tdDevolucao);
 
 	var $tdCancelar = $('<td>');
 	if (l.cancelavel) {
@@ -1512,6 +1820,16 @@ $(document).ready(function(){
 			}
 		});
 	});
+
+	$('#confirmVoltar').on('click', fecharModalConfirmarAgendamento);
+	$('#confirmConfirmar').on('click', confirmarAgendamentoPendente);
+	$('#confirmFechar').on('click', fecharModalConfirmarAgendamento);
+
+	$('#agendadosBody').on('click', '.btn-devolver', function(){
+		abrirModalDevolucao($(this).data('id'));
+	});
+	$('#devolucaoFechar').on('click', fecharModalDevolucao);
+	$('#devolucaoConfirmar').on('click', confirmarDevolucaoManual);
 
 	setInterval(function(){
 		atualizarRelogio();
