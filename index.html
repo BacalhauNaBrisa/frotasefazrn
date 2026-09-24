@@ -13,6 +13,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
 :root{
@@ -389,6 +390,7 @@ table.avail tbody tr:hover td{background:var(--cream-100);}
 	margin-bottom:12px;
 }
 .table-refresh-note{font-size:11.5px; color:var(--ink-400);}
+.btn-export{display:inline-flex; align-items:center; gap:7px; white-space:nowrap;}
 .table-wrap{
 	overflow:auto;
 	border:1px solid var(--line);
@@ -616,6 +618,10 @@ footer a{color:var(--ink-600);}
 
 		<div class="table-toolbar">
 			<span class="table-refresh-note">Atualizado automaticamente a cada 15 segundos, conforme o horário de Natal.</span>
+			<button type="button" class="btn-secondary btn-export" id="btnExportAgendados">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+				Gerar relatório em .xlsx
+			</button>
 		</div>
 
 		<div class="table-wrap">
@@ -636,6 +642,10 @@ footer a{color:var(--ink-600);}
 
 		<div class="table-toolbar">
 			<span class="table-refresh-note">Atualizado automaticamente a cada 15 segundos, conforme o horário de Natal.</span>
+			<button type="button" class="btn-secondary btn-export" id="btnExportFrota">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+				Gerar relatório em .xlsx
+			</button>
 		</div>
 
 		<div class="table-wrap">
@@ -931,7 +941,16 @@ var VEICULOS = [
 var VEICULO_BY_PLACA = {};
 VEICULOS.forEach(function(v){ VEICULO_BY_PLACA[v.placa] = v; });
 
-var CARACTERIZADAS_DISTINTAS = Array.from(new Set(VEICULOS.map(function(v){ return v.caracterizada; })))
+function formatCaracterizada(raw) {
+	// Exibição simplificada do campo "Caracterizada": veículos descaracterizados
+	// mostram "--", e os descaracterizados com adesivo do Governo do RN mostram
+	// apenas "ADESIVO GOV/RN".
+	if (raw === 'DESCARACTERIZADA ADESIVO GOV/RN') return 'ADESIVO GOV/RN';
+	if (raw === 'DESCARACTERIZADA') return '--';
+	return raw;
+}
+
+var CARACTERIZADAS_DISTINTAS = Array.from(new Set(VEICULOS.map(function(v){ return formatCaracterizada(v.caracterizada); })))
 	.sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
 var PROPRIEDADES_DISTINTAS = Array.from(new Set(VEICULOS.map(function(v){ return v.propriedade; })))
 	.sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
@@ -940,13 +959,14 @@ var PROPRIEDADES_DISTINTAS = Array.from(new Set(VEICULOS.map(function(v){ return
 //
 // Para que as reservas feitas por qualquer servidor apareçam para todos os demais em
 // tempo real, este sistema usa o Firebase Realtime Database, um banco de dados
-// gratuito do Google. COMO HABILITAR: crie um projeto gratuito em
-// https://console.firebase.google.com/, ative o "Realtime Database" e substitua os
-// valores de exemplo abaixo pela configuração ("firebaseConfig") do SEU projeto. O
-// passo a passo completo está no README.md do repositório. Enquanto os valores de
-// exemplo não forem substituídos, o sistema continua funcionando normalmente, mas
-// salvando as reservas apenas no navegador de cada pessoa (modo local), com um aviso
-// visível na página.
+// gratuito do Google. A configuração abaixo já aponta para o projeto Firebase
+// "frotasefazrn" deste repositório, então nenhuma configuração adicional é
+// necessária para usar esta implantação. Caso este arquivo seja reaproveitado em
+// outro projeto/repositório, substitua os valores abaixo pela configuração
+// ("firebaseConfig") do SEU próprio projeto Firebase — passo a passo no README.md.
+// Enquanto a configuração aqui não corresponder a um projeto Firebase válido, o
+// sistema continua funcionando normalmente, mas salvando as reservas apenas no
+// navegador de cada pessoa (modo local), com um aviso visível na página.
 
 var FIREBASE_CONFIG = {
 	apiKey: "AIzaSyA2rbUa7NdXo6H-TSYWyD8Esauct7Bigik",
@@ -1258,7 +1278,7 @@ function renderDisponiveis(disponiveis, retirada, devolucao, local) {
 		$row.append('<td>' + v.veiculo + '</td>');
 		$row.append('<td>' + v.lotado + '</td>');
 		$row.append('<td class="num">' + v.placa + '</td>');
-		$row.append('<td>' + v.caracterizada + '</td>');
+		$row.append('<td>' + formatCaracterizada(v.caracterizada) + '</td>');
 		$row.append('<td>' + v.propriedade + '</td>');
 		var $btn = $('<button type="button" class="btn-reservar" title="Reservar esta viatura">' +
 			'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>');
@@ -1501,7 +1521,7 @@ TabelaInterativa.prototype._montarCabecalho = function() {
 	});
 };
 
-TabelaInterativa.prototype.render = function() {
+TabelaInterativa.prototype._linhasProcessadas = function() {
 	var self = this;
 	var linhas = this.obterLinhas();
 
@@ -1533,11 +1553,36 @@ TabelaInterativa.prototype.render = function() {
 		return 0;
 	});
 
+	return linhas;
+};
+
+TabelaInterativa.prototype.render = function() {
+	var self = this;
+	var linhas = this._linhasProcessadas();
+
 	this.$headerRow.find('th .arrow').text('');
-	this.$headerRow.find('th[data-col="' + col + '"] .arrow').text(dir === 'asc' ? '▲' : '▼');
+	this.$headerRow.find('th[data-col="' + this.sort.col + '"] .arrow').text(this.sort.dir === 'asc' ? '▲' : '▼');
 
 	this.$body.empty();
 	linhas.forEach(function(l){ self.$body.append(self.montarLinha(l)); });
+};
+
+TabelaInterativa.prototype.exportarXlsx = function(nomeArquivo) {
+	var linhas = this._linhasProcessadas();
+	var colunasExport = this.colunas.filter(function(c){ return c.tipo !== 'acao'; });
+
+	var cabecalho = colunasExport.map(function(c){ return c.titulo; });
+	var dados = linhas.map(function(l){
+		return colunasExport.map(function(c){
+			var v = l[c.id];
+			return (v === null || v === undefined) ? '' : String(v);
+		});
+	});
+
+	var planilha = XLSX.utils.aoa_to_sheet([cabecalho].concat(dados));
+	var livro = XLSX.utils.book_new();
+	XLSX.utils.book_append_sheet(livro, planilha, 'Dados');
+	XLSX.writeFile(livro, nomeArquivo);
 };
 
 // ======================= DASHBOARD "FROTA DE VEÍCULOS" =======================
@@ -1560,7 +1605,7 @@ function reservaAtivaParaPlaca(placa, agora) {
 	var ativa = null;
 	Object.keys(reservas).forEach(function(id){
 		var r = reservas[id];
-		if (r.placa !== placa || r.cancelado) return;
+		if (r.placa !== placa || r.cancelado || r.devolucaoManual) return;
 		var ini = new Date(r.retirada), fim = new Date(r.devolucao);
 		if (ini.getTime() <= agora.getTime() && agora.getTime() < fim.getTime()) ativa = r;
 	});
@@ -1574,7 +1619,7 @@ function construirLinhasFrota() {
 		return {
 			veiculo: v.veiculo,
 			placa: v.placa,
-			caracterizada: v.caracterizada,
+			caracterizada: formatCaracterizada(v.caracterizada),
 			lotado: v.lotado,
 			propriedade: v.propriedade,
 			status: res ? 'EM USO' : 'DISPONÍVEL',
@@ -1638,6 +1683,7 @@ var AGENDADOS_COLUNAS = [
 
 function statusAgendamento(reserva, agora) {
 	if (reserva.cancelado) return 'CANCELADO';
+	if (reserva.devolucaoManual) return 'EXPIRADO';
 	var ini = new Date(reserva.retirada), fim = new Date(reserva.devolucao);
 	if (agora.getTime() < ini.getTime()) return 'AGENDADO';
 	if (agora.getTime() < fim.getTime()) return 'EM USO';
@@ -1655,7 +1701,7 @@ function construirLinhasAgendados() {
 			codigo: r.codigo || '-',
 			veiculo: v.veiculo || r.veiculo,
 			placa: r.placa,
-			caracterizada: v.caracterizada || '-',
+			caracterizada: v.caracterizada ? formatCaracterizada(v.caracterizada) : '-',
 			lotado: v.lotado || r.local,
 			propriedade: v.propriedade || '-',
 			status: status,
@@ -1765,6 +1811,16 @@ function atualizarRelogio() {
 	$('#relogioAgora').text(formatDataHoraRecife(new Date()));
 }
 
+// ======================= EXPORTAÇÃO DE RELATÓRIOS =======================
+
+function nomeArquivoRelatorio(prefixo) {
+	var partes = recifeDateParts(new Date());
+	var hora = new Intl.DateTimeFormat('pt-BR', {
+		timeZone: 'America/Recife', hour: '2-digit', minute: '2-digit', hour12: false
+	}).format(new Date()).replace(':', 'h');
+	return prefixo + '_' + partes.iso + '_' + hora + '.xlsx';
+}
+
 // ======================= EVENTOS =======================
 
 $(document).ready(function(){
@@ -1830,6 +1886,13 @@ $(document).ready(function(){
 	});
 	$('#devolucaoFechar').on('click', fecharModalDevolucao);
 	$('#devolucaoConfirmar').on('click', confirmarDevolucaoManual);
+
+	$('#btnExportAgendados').on('click', function(){
+		tabelaAgendados.exportarXlsx(nomeArquivoRelatorio('agendados_frotasefazrn'));
+	});
+	$('#btnExportFrota').on('click', function(){
+		tabelaFrota.exportarXlsx(nomeArquivoRelatorio('frota_frotasefazrn'));
+	});
 
 	setInterval(function(){
 		atualizarRelogio();

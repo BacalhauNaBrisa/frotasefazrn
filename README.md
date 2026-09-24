@@ -35,7 +35,7 @@ Não há servidor, backend ou build: basta abrir o arquivo no navegador (ou aces
 
 ### 2. Agendados
 
-O módulo "Agendados", entre os dashboards de agendamento e de frota, lista **todos** os agendamentos já registrados (independentemente do local), nesta ordem de colunas: código do agendamento, veículo, lotado, placa, caracterização, propriedade, status, responsável, setor solicitante, finalidade, data/hora de retirada, data/hora de devolução, data/hora de devolução (baixa manual), observação, data/hora de cancelamento, registrar devolução e cancelar. Assim como a tabela de frota, é ordenável clicando no título de cada coluna e filtrável pelos campos logo abaixo dos títulos.
+O módulo "Agendados", entre os dashboards de agendamento e de frota, lista **todos** os agendamentos já registrados (independentemente do local), nesta ordem de colunas: código do agendamento, veículo, lotado, placa, caracterização, propriedade, status, responsável, setor solicitante, finalidade, data/hora de retirada, data/hora de devolução, data/hora de devolução (baixa manual), observação, data/hora de cancelamento, registrar devolução e cancelar. Assim como a tabela de frota, é ordenável clicando no título de cada coluna, filtrável pelos campos logo abaixo dos títulos, e conta com um botão **"Gerar relatório em .xlsx"** no canto superior direito, que baixa uma planilha com exatamente as linhas e colunas visíveis naquele momento (respeitando os filtros e a ordenação aplicados).
 
 O campo **status** desse módulo é calculado em tempo real e é diferente do status mostrado no dashboard de frota:
 
@@ -43,16 +43,16 @@ O campo **status** desse módulo é calculado em tempo real e é diferente do st
 |---|---|---|
 | `AGENDADO` | a retirada ainda não chegou | verde |
 | `EM USO` | a retirada já começou e a devolução ainda não chegou | amarelo |
-| `EXPIRADO` | a devolução já chegou | cinza |
+| `EXPIRADO` | a devolução já chegou, ou já foi registrada uma devolução manual | cinza |
 | `CANCELADO` | o responsável cancelou o agendamento | vermelho |
 
 **Cancelamento:** para cancelar um agendamento ainda `AGENDADO` ou `EM USO`, clique no ✕ vermelho da coluna "Cancelar"; o sistema pede a matrícula do responsável pelo agendamento original e só libera a confirmação quando ela confere. Agendamentos `EXPIRADO` ou já `CANCELADO` não exibem o botão de cancelar. O cancelamento não apaga o registro: o código do agendamento permanece gravado, inclusive para efeito do limite diário de 99 agendamentos por matrícula (ver abaixo), e a data/hora em que o cancelamento ocorreu passa a ser exibida na coluna "Data/hora de cancelamento".
 
-**Registro manual de devolução:** a devolução automática do veículo continua ocorrendo pela hora de devolução prevista na reserva (é o que alimenta o status `EM USO` → `EXPIRADO`). Além disso, enquanto o agendamento estiver `EM USO` ou já `EXPIRADO` e nenhuma devolução manual tiver sido registrada, a coluna "Registrar devolução" exibe um botão azul que abre um modal para dar baixa real na devolução: data/hora efetiva (obrigatoriamente posterior à retirada), quilometragem inicial, quilometragem final e uma observação em texto livre. Ao confirmar, a data/hora informada aparece na coluna "Data/hora de devolução (baixa manual)" e a observação na coluna "Observação"; o botão então deixa de ser exibido para aquele agendamento. Enquanto a baixa manual não é feita, o botão permanece disponível mesmo depois que o sistema já tiver liberado a viatura automaticamente pelo horário previsto.
+**Registro manual de devolução:** a devolução automática do veículo continua ocorrendo pela hora de devolução prevista na reserva. Além disso, enquanto o agendamento estiver `EM USO` ou já `EXPIRADO` e nenhuma devolução manual tiver sido registrada, a coluna "Registrar devolução" exibe um botão azul que abre um modal para dar baixa real na devolução: data/hora efetiva (obrigatoriamente posterior à retirada), quilometragem inicial, quilometragem final e uma observação em texto livre. Ao confirmar, a data/hora informada aparece na coluna "Data/hora de devolução (baixa manual)" e a observação na coluna "Observação"; o status do agendamento passa imediatamente para `EXPIRADO` (mesmo que a hora de devolução prevista ainda não tenha chegado) e a viatura correspondente volta a aparecer como `DISPONÍVEL` no dashboard de frota; o botão então deixa de ser exibido para aquele agendamento. Enquanto a baixa manual não é feita, o botão permanece disponível mesmo depois que o sistema já tiver marcado o agendamento como `EXPIRADO` pelo horário previsto.
 
 ### 3. Frota de veículos
 
-Logo abaixo, a tabela "Frota de veículos" mostra o status ao vivo das 56 viaturas — recalculado automaticamente a cada 15 segundos e a cada nova reserva, cancelamento ou registro de devolução —, nesta ordem de colunas: veículo, lotado, placa, caracterização, propriedade, status (**EM USO**, em amarelo, ou **DISPONÍVEL**, em verde), responsável, setor solicitante, finalidade, data/hora de retirada e data/hora de devolução. Clique no título de qualquer coluna para ordenar (crescente/decrescente) e use os campos logo abaixo dos títulos para filtrar por texto ou por valor. Reservas canceladas não contam para o status "EM USO".
+Logo abaixo, a tabela "Frota de veículos" mostra o status ao vivo das 56 viaturas — recalculado automaticamente a cada 15 segundos e a cada nova reserva, cancelamento ou registro de devolução —, nesta ordem de colunas: veículo, lotado, placa, caracterização, propriedade, status (**EM USO**, em amarelo, ou **DISPONÍVEL**, em verde), responsável, setor solicitante, finalidade, data/hora de retirada e data/hora de devolução. Clique no título de qualquer coluna para ordenar (crescente/decrescente) e use os campos logo abaixo dos títulos para filtrar por texto ou por valor. Reservas canceladas ou já com devolução manual registrada não contam para o status "EM USO". Assim como em "Agendados", o botão **"Gerar relatório em .xlsx"** no canto superior direito baixa uma planilha com as linhas e colunas atualmente exibidas na tabela.
 
 ## Código de agendamento
 
@@ -84,10 +84,10 @@ As reservas ficam guardadas em um banco de dados na nuvem (Firebase Realtime Dat
 
 Por padrão, uma página hospedada no GitHub Pages é **estática**: não existe servidor nem banco de dados próprios, então, sem nenhuma configuração adicional, cada navegador só enxergaria as próprias reservas. Para que todos os servidores vejam e registrem as **mesmas** reservas, o `index.html` se conecta a um banco de dados gratuito do Google — o [Firebase Realtime Database](https://firebase.google.com/docs/database) — diretamente do navegador, via JavaScript, sem precisar de nenhum servidor mantido por vocês.
 
-Essa configuração precisa ser feita uma única vez, por qualquer pessoa com uma conta Google:
+A configuração do Firebase (bloco `var FIREBASE_CONFIG = { ... }`, no início do `<script>` final do `index.html`) **já vem embutida** neste repositório, apontando para o projeto Firebase `frotasefazrn` — nenhum passo adicional é necessário para que a sincronização em tempo real funcione a cada nova cópia do arquivo. O passo a passo abaixo só é necessário se este `index.html` for reaproveitado num projeto/repositório diferente, com seu próprio banco de dados:
 
 1. Acesse [console.firebase.google.com](https://console.firebase.google.com/) e faça login com uma conta Google.
-2. Clique em **"Adicionar projeto"**, dê um nome (por exemplo, `frotasefazrn`) e conclua a criação. Não é necessário ativar o Google Analytics.
+2. Clique em **"Adicionar projeto"**, dê um nome e conclua a criação. Não é necessário ativar o Google Analytics.
 3. Dentro do projeto, no menu lateral, acesse **Build → Realtime Database** e clique em **"Criar banco de dados"**.
 4. Escolha uma localização (qualquer uma serve) e, quando perguntado sobre as regras de segurança, escolha iniciar em **modo de teste** — ou já configure manualmente as regras do passo 5.
 5. Na aba **"Regras"** do Realtime Database, substitua o conteúdo pelo seguinte e publique:
@@ -100,23 +100,11 @@ Essa configuração precisa ser feita uma única vez, por qualquer pessoa com um
    }
    ```
    ⚠️ **Nota de segurança:** essas regras deixam o banco de dados com leitura e escrita **públicas** (sem exigir login), pois o sistema não usa autenticação — qualquer pessoa com o link do projeto poderia, em tese, alterar os dados diretamente pela API do Firebase. Isso é adequado para este uso informal e interno entre os servidores da SUMAT, mas o banco **não deve ser reaproveitado** para guardar informações sensíveis.
-6. Vá em **⚙️ Configurações do projeto → Geral**, role até **"Seus apps"** e clique no ícone `</>` (Web) para registrar um novo app. Dê um apelido qualquer (ex.: `frotasefazrn-web`) e clique em **"Registrar app"** (não é necessário adicionar o Firebase Hosting).
-7. Copie o objeto `firebaseConfig` exibido na tela — algo como:
-   ```js
-   const firebaseConfig = {
-     apiKey: "AIza...",
-     authDomain: "frotasefazrn.firebaseapp.com",
-     databaseURL: "https://frotasefazrn-default-rtdb.firebaseio.com",
-     projectId: "frotasefazrn",
-     storageBucket: "frotasefazrn.appspot.com",
-     messagingSenderId: "123456789012",
-     appId: "1:123456789012:web:abcdef1234567890abcdef"
-   };
-   ```
-8. Abra o arquivo `index.html` deste repositório e localize o bloco `var FIREBASE_CONFIG = { ... }`, no início do `<script>` final da página. Substitua os valores de exemplo pelos valores copiados no passo 7.
-9. Salve, faça o commit e o push do `index.html` atualizado para o repositório — o GitHub Pages publica a nova versão automaticamente em alguns minutos.
+6. Vá em **⚙️ Configurações do projeto → Geral**, role até **"Seus apps"** e clique no ícone `</>` (Web) para registrar um novo app. Dê um apelido qualquer e clique em **"Registrar app"** (não é necessário adicionar o Firebase Hosting).
+7. Copie o objeto `firebaseConfig` exibido na tela e substitua os valores do bloco `var FIREBASE_CONFIG = { ... }` no `index.html` por esses novos valores.
+8. Salve, faça o commit e o push do `index.html` atualizado para o repositório — o GitHub Pages publica a nova versão automaticamente em alguns minutos.
 
-A partir daí, a barra de status acima do formulário de agendamento passa a exibir **"Sincronizado com todos os usuários"** (em vez de "Modo local"), e qualquer reserva ou cancelamento feito por alguém aparece, em tempo real, para todas as outras pessoas com a página aberta.
+A barra de status acima do formulário de agendamento exibe **"Sincronizado com todos os usuários"** quando a conexão está ativa (em vez de "Modo local"), e qualquer reserva, cancelamento ou registro de devolução feito por alguém aparece, em tempo real, para todas as outras pessoas com a página aberta.
 
 ## Dados cadastrados
 
@@ -124,16 +112,18 @@ A partir daí, a barra de status acima do formulário de agendamento passa a exi
 - **19 setores solicitantes**: SUMAT, SUMAT/NIF, SUCADI, SUFISE, SUSCOMEX, COFIS, CACE, SUDEFI, GS, Central de Veículos, COGEF, COTIC, 1 URT, 2 URT, 3 URT, 5 URT, 6 URT, 7 URT e COEF.
 - **3 finalidades**: Itinerância, Plantão e Visita Institucional.
 - **128 servidores** cadastrados por nome e matrícula, usados para validar o campo de matrícula no agendamento e no cancelamento — a lista original de 48 foi ampliada com os 80 condutores da escala de auditores 24h da SUMAT.
-- **56 viaturas** da frota, com veículo, placa, caracterização, local de lotação e propriedade (própria/alugada).
+- **56 viaturas** da frota, com veículo, placa, caracterização, local de lotação e propriedade (própria/alugada). No campo "Caracterizada", o valor `DESCARACTERIZADA` é exibido como `--` e `DESCARACTERIZADA ADESIVO GOV/RN` é exibido como `ADESIVO GOV/RN`, em qualquer tabela ou filtro da página; os dados internos continuam com o valor original.
 
 Qualquer alteração nessas listas (troca de servidor, movimentação de viatura entre locais etc.) exige editar diretamente os arrays correspondentes (`LOCAIS`, `SETORES`, `FINALIDADES`, `SERVIDORES`, `VEICULOS`) no início do `<script>` do `index.html`.
 
 ## Tecnologias utilizadas
 
+
 - **HTML5** — estrutura da página, em arquivo único (`index.html`).
 - **CSS3** puro — sem framework; variáveis CSS (`:root`) para cores/tema, tabelas com colunas fixas (`position: sticky`) para o cabeçalho e a linha de filtros do dashboard de frota, e fontes do Google Fonts (*Space Grotesk*, *Inter*, *JetBrains Mono* para números e placas).
 - **JavaScript (ES5/ES6)** — geração dos formulários e das tabelas de frota e de agendados, validação de matrícula, geração do código de agendamento, cálculo de disponibilidade por sobreposição de horário, modais de confirmação de agendamento/cancelamento/registro de devolução manual, e ordenação/filtro das colunas (através de um pequeno componente `TabelaInterativa` reaproveitado pelos dois dashboards). As atualizações de uma reserva (cancelamento, baixa manual) passam por uma função genérica (`atualizarCamposReserva`) que grava no Firebase ou no `localStorage`, conforme o modo de sincronização ativo.
 - **jQuery 3.7** (via CDN) — manipulação do DOM e eventos que disparam a atualização automática.
+- **SheetJS (xlsx.js)** (via CDN) — geração, inteiramente no navegador, dos relatórios `.xlsx` baixados a partir dos dashboards "Agendados" e "Frota de veículos".
 - **Firebase Realtime Database** (via CDN, SDK compat) — sincronização em tempo real das reservas entre todos os usuários que acessam a página; com `localStorage` como reserva local enquanto o Firebase não estiver configurado.
 - **GitHub Pages** — hospedagem estática, sem backend próprio, sem build step, sem dependências instaladas: o repositório é publicado como está.
 
