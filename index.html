@@ -114,6 +114,7 @@ a{color:var(--navy-700);}
 	font-size:16.5px;
 	display:flex;
 	align-items:baseline;
+	justify-content:space-between;
 	gap:8px;
 	border-bottom:1px solid var(--cream-100);
 	padding-bottom:12px;
@@ -135,6 +136,35 @@ a{color:var(--navy-700);}
 	margin:-6px 0 16px;
 	line-height:1.55;
 }
+
+/* ---------- cards recolhíveis / login ---------- */
+h2.card-header{
+	cursor:pointer;
+	user-select:none;
+}
+.card-toggle-icon{
+	display:inline-flex;
+	align-items:center;
+	flex-shrink:0;
+	color:var(--ink-400);
+}
+h2.card-header .icon-lock{display:none;}
+h2.card-header .icon-chevron{transition:transform .2s ease;}
+.card.collapsed > h2.card-header .icon-chevron{transform:rotate(-90deg);}
+.card.locked > h2.card-header{opacity:.55; cursor:not-allowed;}
+.card.locked > h2.card-header .icon-chevron{display:none;}
+.card.locked > h2.card-header .icon-lock{display:inline-flex;}
+.card.collapsed > .card-body{display:none;}
+.card:not(.collapsed) > h2.card-header{margin-bottom:18px;}
+.card-login{border-color:var(--navy-700);}
+.card-login > h2{margin-bottom:14px;}
+.login-form-grid{
+	display:flex;
+	flex-wrap:wrap;
+	align-items:end;
+	gap:14px 16px;
+}
+.login-form-grid .field{flex:0 0 220px;}
 
 /* ---------- status line / sync badge ---------- */
 .status-line{
@@ -545,8 +575,39 @@ footer a{color:var(--ink-600);}
 
 <div class="wrap">
 
-	<div class="card">
-		<h2>Agendamento <span class="tag">reserva de viatura</span></h2>
+	<div class="card card-login" id="cardLogin">
+		<h2>Login <span class="tag">identificação</span></h2>
+
+		<div id="loginFormWrap">
+			<p class="lead">Informe sua matrícula para acessar o agendamento e acompanhar suas reservas.</p>
+			<div class="login-form-grid">
+				<div class="field">
+					<label for="inpLoginMatricula">Matrícula</label>
+					<input type="text" id="inpLoginMatricula" inputmode="numeric" placeholder="256.410-6" maxlength="9"/>
+					<div class="field-msg" id="msgLoginMatricula"></div>
+				</div>
+				<div class="form-actions" style="margin-top:0;">
+					<button type="button" class="btn-primary" id="btnLoginAcessar" disabled>Acessar</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="loginStatusWrap" class="hidden">
+			<p class="lead" id="loginStatusTexto"></p>
+			<div class="form-actions">
+				<button type="button" class="btn-secondary" id="btnLoginTrocar">Trocar matrícula</button>
+			</div>
+		</div>
+	</div>
+
+	<div class="card locked collapsed" id="cardAgendamento">
+		<h2 class="card-header" title="Faça login para acessar"><span class="card-title-group">Agendamento <span class="tag">reserva de viatura</span></span>
+			<span class="card-toggle-icon">
+				<svg class="icon-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+				<svg class="icon-lock" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+			</span>
+		</h2>
+		<div class="card-body">
 		<p class="lead">Preencha os dados da retirada e da devolução para verificar quais viaturas estão disponíveis no local escolhido. Os horários seguem o fuso de Natal (UTC−3) e devem estar no futuro em relação ao momento atual.</p>
 
 		<div id="avisoLocalAgendamento" class="sync-warning hidden">⚠️ A sincronização em tempo real com o Firebase não está configurada (ou não foi possível conectar). As reservas estão sendo salvas apenas neste navegador. Veja o <code>README.md</code> do repositório para configurar a sincronização entre todos os usuários.</div>
@@ -610,11 +671,18 @@ footer a{color:var(--ink-600);}
 		</div>
 
 		<div class="citation">A disponibilidade é recalculada com base nas reservas já registradas para cada viatura: uma viatura só aparece como disponível se não houver, para o período solicitado, nenhuma outra reserva ativa (não cancelada) com horário sobreposto.</div>
+		</div>
 	</div>
 
-	<div class="card">
-		<h2>Agendados <span class="tag">gerenciar reservas</span></h2>
-		<p class="lead">Todos os agendamentos já registrados, com o código gerado para cada um, o status atual e a opção de cancelamento. Clique no título de uma coluna para ordenar e use os campos abaixo dos títulos para filtrar.</p>
+	<div class="card locked collapsed" id="cardAgendados">
+		<h2 class="card-header" title="Faça login para acessar"><span class="card-title-group">Agendados <span class="tag">gerenciar reservas</span></span>
+			<span class="card-toggle-icon">
+				<svg class="icon-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+				<svg class="icon-lock" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+			</span>
+		</h2>
+		<div class="card-body">
+		<p class="lead" id="agendadosLead">Todos os agendamentos já registrados, com o código gerado para cada um, o status atual e a opção de cancelamento. Clique no título de uma coluna para ordenar e use os campos abaixo dos títulos para filtrar.</p>
 
 		<div class="table-toolbar">
 			<span class="table-refresh-note">Atualizado automaticamente a cada 15 segundos, conforme o horário de Natal.</span>
@@ -634,10 +702,17 @@ footer a{color:var(--ink-600);}
 			</table>
 		</div>
 		<div class="citation">AGENDADO (verde): a retirada ainda não começou. EM USO (amarelo): já foi retirado e a devolução ainda não chegou. EXPIRADO (cinza): a devolução já chegou. CANCELADO (vermelho): o agendamento foi cancelado pelo responsável. O código do agendamento permanece registrado mesmo após o cancelamento, inclusive para o cômputo do limite diário de 99 agendamentos por matrícula.</div>
+		</div>
 	</div>
 
-	<div class="card">
-		<h2>Frota de veículos <span class="tag">status ao vivo</span></h2>
+	<div class="card locked collapsed" id="cardFrota">
+		<h2 class="card-header" title="Faça login para acessar"><span class="card-title-group">Frota de veículos <span class="tag">status ao vivo</span></span>
+			<span class="card-toggle-icon">
+				<svg class="icon-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+				<svg class="icon-lock" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+			</span>
+		</h2>
+		<div class="card-body">
 		<p class="lead">Situação, em tempo real, de todas as 56 viaturas da frota. Clique no título de uma coluna para ordenar e use os campos abaixo dos títulos para filtrar.</p>
 
 		<div class="table-toolbar">
@@ -656,6 +731,7 @@ footer a{color:var(--ink-600);}
 				</thead>
 				<tbody id="frotaBody"></tbody>
 			</table>
+		</div>
 		</div>
 	</div>
 
@@ -754,12 +830,12 @@ var SERVIDORES = [
 	{ nome:"Arthur",           matricula:"2564475" },
 	{ nome:"Carlos",           matricula:"2563959" },
 	{ nome:"Caroline",         matricula:"2562820" },
-	{ nome:"Daniel",           matricula:"2560330" },
+	{ nome:"Daniel",           matricula:"2560330", gestor:true },
 	{ nome:"Danielle",         matricula:"2564092" },
 	{ nome:"Estevam",          matricula:"2564840" },
 	{ nome:"Fabiano",          matricula:"2564521" },
 	{ nome:"Fellipe",          matricula:"2562448" },
-	{ nome:"Fernando",         matricula:"1945289" },
+	{ nome:"Fernando",         matricula:"1945289", gestor:true },
 	{ nome:"Braga",            matricula:"2562774" },
 	{ nome:"Girlian",          matricula:"2563932" },
 	{ nome:"Gustavo",          matricula:"2564106" },
@@ -1158,6 +1234,98 @@ function gerarCodigoAgendamento(matriculaDigitos, momentoCriacao) {
 	if (seq > 99) return null; // limite diário de 99 agendamentos por matrícula atingido
 
 	return prefixoDia + pad2(seq);
+}
+
+// ======================= CONTROLE DE ACESSO (LOGIN) =======================
+//
+// Login apenas identifica o servidor (matrícula validada contra SERVIDORES) para
+// decidir o que fica visível na página; não é uma autenticação com senha. Os
+// gestores (campo "gestor: true" no cadastro do servidor, em SERVIDORES) são os
+// únicos que veem "Agendados" e "Frota de veículos" com todos os dados; os demais
+// veem "Agendados" filtrado apenas pelos próprios agendamentos, e "Frota de
+// veículos" permanece bloqueado.
+
+var currentUser = null; // { matricula, nome, gestor } | null
+
+function isGestor(matriculaDigitos) {
+	var s = SERVIDOR_BY_MAT[matriculaDigitos];
+	return !!(s && s.gestor);
+}
+
+function isGestorAtivo() {
+	return !!(currentUser && currentUser.gestor);
+}
+
+function formatarMatriculaLoginInput() {
+	var digitos = $('#inpLoginMatricula').val().replace(/\D/g, '').slice(0, 7);
+	var formatado = digitos;
+	if (digitos.length === 7) {
+		formatado = digitos.slice(0,3) + '.' + digitos.slice(3,6) + '-' + digitos.slice(6);
+	}
+	$('#inpLoginMatricula').val(formatado);
+	$('#msgLoginMatricula').text('');
+	$('#btnLoginAcessar').prop('disabled', digitos.length !== 7);
+}
+
+function setCardLockCollapse($card, locked, collapsed) {
+	$card.toggleClass('locked', locked);
+	$card.toggleClass('collapsed', collapsed);
+	$card.find('> h2.card-header').attr('title', locked ? 'Faça login para acessar' : 'Clique para recolher/expandir');
+}
+
+function aplicarEstadoPosLogin() {
+	var gestor = isGestorAtivo();
+
+	setCardLockCollapse($('#cardAgendamento'), false, false);
+	setCardLockCollapse($('#cardAgendados'), false, false);
+	$('#agendadosLead').text(gestor
+		? 'Todos os agendamentos já registrados, com o código gerado para cada um, o status atual e a opção de cancelamento. Clique no título de uma coluna para ordenar e use os campos abaixo dos títulos para filtrar.'
+		: 'Seus agendamentos já registrados, com o código gerado para cada um, o status atual e a opção de cancelamento. Clique no título de uma coluna para ordenar e use os campos abaixo dos títulos para filtrar.');
+
+	if (gestor) {
+		setCardLockCollapse($('#cardFrota'), false, false);
+	} else {
+		setCardLockCollapse($('#cardFrota'), true, true);
+	}
+
+	renderTudo();
+}
+
+function tentarLogin() {
+	var digitos = $('#inpLoginMatricula').val().replace(/\D/g, '');
+	if (digitos.length !== 7) return;
+
+	var servidor = SERVIDOR_BY_MAT[digitos];
+	if (!servidor) {
+		$('#msgLoginMatricula').text('Matrícula inválida.');
+		return;
+	}
+
+	currentUser = { matricula: digitos, nome: servidor.nome, gestor: !!servidor.gestor };
+
+	$('#msgLoginMatricula').text('');
+	$('#loginFormWrap').addClass('hidden');
+	$('#loginStatusWrap').removeClass('hidden');
+	$('#loginStatusTexto').html('Conectado como <b>' + servidor.nome + '</b> (' + $('#inpLoginMatricula').val() + ')' +
+		(currentUser.gestor ? ' — acesso de gestor.' : '.'));
+
+	aplicarEstadoPosLogin();
+}
+
+function tentarLogout() {
+	currentUser = null;
+
+	$('#inpLoginMatricula').val('');
+	$('#msgLoginMatricula').text('');
+	$('#btnLoginAcessar').prop('disabled', true);
+	$('#loginStatusWrap').addClass('hidden');
+	$('#loginFormWrap').removeClass('hidden');
+
+	setCardLockCollapse($('#cardAgendamento'), true, true);
+	setCardLockCollapse($('#cardAgendados'), true, true);
+	setCardLockCollapse($('#cardFrota'), true, true);
+
+	renderTudo();
 }
 
 // ======================= FORMULÁRIO DE AGENDAMENTO =======================
@@ -1705,6 +1873,7 @@ function construirLinhasAgendados() {
 			lotado: v.lotado || r.local,
 			propriedade: v.propriedade || '-',
 			status: status,
+			matricula: r.matricula,
 			responsavel: r.nome,
 			setor: r.setor,
 			finalidade: r.finalidade,
@@ -1842,12 +2011,32 @@ $(document).ready(function(){
 		headerRowSelector: '#agendadosHeaderRow',
 		filterRowSelector: '#agendadosFilterRow',
 		bodySelector: '#agendadosBody',
-		obterLinhas: construirLinhasAgendados,
+		obterLinhas: function(){
+			var linhas = construirLinhasAgendados();
+			if (!isGestorAtivo()) {
+				var mat = currentUser ? currentUser.matricula : null;
+				linhas = mat ? linhas.filter(function(l){ return l.matricula === mat; }) : [];
+			}
+			return linhas;
+		},
 		montarLinha: montarLinhaAgendados,
 		sortPadrao: 'retiradaFmt'
 	});
 
 	iniciarSincronizacao();
+
+	$('#inpLoginMatricula').on('input', formatarMatriculaLoginInput);
+	$('#btnLoginAcessar').on('click', tentarLogin);
+	$('#inpLoginMatricula').on('keydown', function(e){
+		if (e.key === 'Enter' && !$('#btnLoginAcessar').prop('disabled')) tentarLogin();
+	});
+	$('#btnLoginTrocar').on('click', tentarLogout);
+
+	$('.card > h2.card-header').on('click', function(){
+		var $card = $(this).closest('.card');
+		if ($card.hasClass('locked')) return;
+		$card.toggleClass('collapsed');
+	});
 
 	$('#inpMatricula').on('input', function(){
 		formatarMatriculaInput();

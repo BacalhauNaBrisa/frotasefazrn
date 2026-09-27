@@ -15,6 +15,7 @@
 
 Este repositório contém uma única página HTML autocontida (`index.html`) que permite:
 
+0. **Identificar-se pela matrícula** (login simples, sem senha) para revelar o agendamento e os próprios agendamentos, com um nível de acesso ampliado para os gestores da SUMAT;
 1. **Agendar** a retirada e a devolução de uma das 56 viaturas da frota, verificando em tempo real quais estão disponíveis num determinado local, período e finalidade — a reserva só é gravada após confirmação num modal, que em seguida exibe o código do agendamento;
 2. **Gerenciar os agendamentos** já feitos, acompanhando o status de cada um (agendado, em uso, expirado ou cancelado), cancelando quando necessário e registrando manualmente a devolução real (com quilometragem e observações);
 3. **Acompanhar**, ao vivo, o status de toda a frota (em uso / disponível), com filtros e ordenação por coluna.
@@ -23,7 +24,23 @@ Não há servidor, backend ou build: basta abrir o arquivo no navegador (ou aces
 
 ## Como usar
 
-### 1. Agendamento
+### 1. Login
+
+Ao abrir a página, os cards "Agendamento", "Agendados" e "Frota de veículos" aparecem recolhidos e bloqueados (ícone de cadeado no título, sem poder ser clicados) até que o usuário se identifique no card "Login", no topo da página:
+
+1. Digite sua matrícula (7 dígitos); o campo só aceita números e formata automaticamente para `256.410-6` assim que os 7 dígitos são digitados.
+2. O botão **"Acessar"** só fica habilitado com os 7 dígitos preenchidos.
+3. Ao clicar, o sistema valida a matrícula contra a listagem de servidores cadastrada no `index.html`. Se não constar na lista, exibe **"Matrícula inválida."**. Se for válida:
+   - o card **"Agendamento"** é desbloqueado e expandido normalmente;
+   - o card **"Agendados"** é desbloqueado e expandido, mas mostrando **apenas os agendamentos feitos por essa matrícula**;
+   - o card **"Frota de veículos"** permanece bloqueado.
+4. Um link **"Trocar matrícula"** permite encerrar a sessão local e voltar à tela de login (útil quando mais de uma pessoa usa o mesmo computador); os três cards voltam a ficar recolhidos e bloqueados.
+
+Esse login não usa senha nem persiste entre sessões (um recarregamento da página exige nova identificação): ele serve apenas para personalizar o que cada servidor vê, não como mecanismo de segurança contra alguém que já tem acesso à página.
+
+**Gestores:** as matrículas cadastradas com `gestor: true` no array `SERVIDORES` do `index.html` (atualmente os responsáveis pela SUMAT) têm acesso ampliado — ao fazer login, tanto **"Agendados"** quanto **"Frota de veículos"** são desbloqueados e expandidos com todos os dados, sem filtro por matrícula. Qualquer card, uma vez desbloqueado, pode ser recolhido/expandido livremente clicando no título — a trava (cadeado) só existe antes do login e, para "Frota de veículos", também para usuários que não são gestores.
+
+### 2. Agendamento
 
 1. Informe a data e a hora de retirada e a data e a hora de devolução (fuso de Natal, UTC−3). É permitido retirar e devolver no mesmo dia.
 2. Digite a matrícula (7 dígitos) do servidor responsável; ela é validada automaticamente contra a listagem cadastrada e formatada como `256.410-6`.
@@ -33,9 +50,9 @@ Não há servidor, backend ou build: basta abrir o arquivo no navegador (ou aces
 6. Clique no ícone verde de confirmação (✔) na linha da viatura desejada. Isso **não** grava a reserva ainda: abre um modal de confirmação com o resumo do agendamento (veículo, local, placa, setor, finalidade, responsável, retirada e devolução).
 7. Clique em **"Confirmar agendamento"** dentro do modal. Uma última verificação é feita nesse momento, para o caso de outra pessoa ter reservado a mesma viatura ou o horário já não estar mais no futuro. Se tudo estiver certo, a reserva é gravada, o **código do agendamento** gerado é exibido no próprio modal (ver seção [Código de agendamento](#código-de-agendamento) abaixo), e a tabela "Viaturas disponíveis" é automaticamente recolhida.
 
-### 2. Agendados
+### 3. Agendados
 
-O módulo "Agendados", entre os dashboards de agendamento e de frota, lista **todos** os agendamentos já registrados (independentemente do local), nesta ordem de colunas: código do agendamento, veículo, lotado, placa, caracterização, propriedade, status, responsável, setor solicitante, finalidade, data/hora de retirada, data/hora de devolução, data/hora de devolução (baixa manual), observação, data/hora de cancelamento, registrar devolução e cancelar. Assim como a tabela de frota, é ordenável clicando no título de cada coluna, filtrável pelos campos logo abaixo dos títulos, e conta com um botão **"Gerar relatório em .xlsx"** no canto superior direito, que baixa uma planilha com exatamente as linhas e colunas visíveis naquele momento (respeitando os filtros e a ordenação aplicados).
+O módulo "Agendados", entre os dashboards de agendamento e de frota, lista os agendamentos já registrados, nesta ordem de colunas: código do agendamento, veículo, lotado, placa, caracterização, propriedade, status, responsável, setor solicitante, finalidade, data/hora de retirada, data/hora de devolução, data/hora de devolução (baixa manual), observação, data/hora de cancelamento, registrar devolução e cancelar. Para um gestor logado, a lista traz **todos** os agendamentos (independentemente do local ou da matrícula responsável); para os demais usuários, traz **apenas os agendamentos feitos pela própria matrícula** usada no login. Em ambos os casos, é ordenável clicando no título de cada coluna, filtrável pelos campos logo abaixo dos títulos, e conta com um botão **"Gerar relatório em .xlsx"** no canto superior direito, que baixa uma planilha com exatamente as linhas e colunas visíveis naquele momento (respeitando os filtros, a ordenação e o escopo do usuário logado).
 
 O campo **status** desse módulo é calculado em tempo real e é diferente do status mostrado no dashboard de frota:
 
@@ -50,9 +67,9 @@ O campo **status** desse módulo é calculado em tempo real e é diferente do st
 
 **Registro manual de devolução:** a devolução automática do veículo continua ocorrendo pela hora de devolução prevista na reserva. Além disso, enquanto o agendamento estiver `EM USO` ou já `EXPIRADO` e nenhuma devolução manual tiver sido registrada, a coluna "Registrar devolução" exibe um botão azul que abre um modal para dar baixa real na devolução: data/hora efetiva (obrigatoriamente posterior à retirada), quilometragem inicial, quilometragem final e uma observação em texto livre. Ao confirmar, a data/hora informada aparece na coluna "Data/hora de devolução (baixa manual)" e a observação na coluna "Observação"; o status do agendamento passa imediatamente para `EXPIRADO` (mesmo que a hora de devolução prevista ainda não tenha chegado) e a viatura correspondente volta a aparecer como `DISPONÍVEL` no dashboard de frota; o botão então deixa de ser exibido para aquele agendamento. Enquanto a baixa manual não é feita, o botão permanece disponível mesmo depois que o sistema já tiver marcado o agendamento como `EXPIRADO` pelo horário previsto.
 
-### 3. Frota de veículos
+### 4. Frota de veículos
 
-Logo abaixo, a tabela "Frota de veículos" mostra o status ao vivo das 56 viaturas — recalculado automaticamente a cada 15 segundos e a cada nova reserva, cancelamento ou registro de devolução —, nesta ordem de colunas: veículo, lotado, placa, caracterização, propriedade, status (**EM USO**, em amarelo, ou **DISPONÍVEL**, em verde), responsável, setor solicitante, finalidade, data/hora de retirada e data/hora de devolução. Clique no título de qualquer coluna para ordenar (crescente/decrescente) e use os campos logo abaixo dos títulos para filtrar por texto ou por valor. Reservas canceladas ou já com devolução manual registrada não contam para o status "EM USO". Assim como em "Agendados", o botão **"Gerar relatório em .xlsx"** no canto superior direito baixa uma planilha com as linhas e colunas atualmente exibidas na tabela.
+Logo abaixo, a tabela "Frota de veículos" — visível apenas para gestores logados (ver seção [Login](#1-login) acima) — mostra o status ao vivo das 56 viaturas — recalculado automaticamente a cada 15 segundos e a cada nova reserva, cancelamento ou registro de devolução —, nesta ordem de colunas: veículo, lotado, placa, caracterização, propriedade, status (**EM USO**, em amarelo, ou **DISPONÍVEL**, em verde), responsável, setor solicitante, finalidade, data/hora de retirada e data/hora de devolução. Clique no título de qualquer coluna para ordenar (crescente/decrescente) e use os campos logo abaixo dos títulos para filtrar por texto ou por valor. Reservas canceladas ou já com devolução manual registrada não contam para o status "EM USO". Assim como em "Agendados", o botão **"Gerar relatório em .xlsx"** no canto superior direito baixa uma planilha com as linhas e colunas atualmente exibidas na tabela.
 
 ## Código de agendamento
 
@@ -111,7 +128,7 @@ A barra de status acima do formulário de agendamento exibe **"Sincronizado com 
 - **8 locais**: Sede Sefaz, NIF, 1 URT, 2 URT, 3 URT, 5 URT, 6 URT e 7 URT.
 - **19 setores solicitantes**: SUMAT, SUMAT/NIF, SUCADI, SUFISE, SUSCOMEX, COFIS, CACE, SUDEFI, GS, Central de Veículos, COGEF, COTIC, 1 URT, 2 URT, 3 URT, 5 URT, 6 URT, 7 URT e COEF.
 - **3 finalidades**: Itinerância, Plantão e Visita Institucional.
-- **128 servidores** cadastrados por nome e matrícula, usados para validar o campo de matrícula no agendamento e no cancelamento — a lista original de 48 foi ampliada com os 80 condutores da escala de auditores 24h da SUMAT.
+- **128 servidores** cadastrados por nome e matrícula, usados para validar o campo de matrícula no login, no agendamento e no cancelamento — a lista original de 48 foi ampliada com os 80 condutores da escala de auditores 24h da SUMAT. Duas matrículas (as dos responsáveis pela SUMAT) têm o campo `gestor: true`, dando acesso ampliado a "Agendados" e "Frota de veículos" (ver seção [Login](#1-login)).
 - **56 viaturas** da frota, com veículo, placa, caracterização, local de lotação e propriedade (própria/alugada). No campo "Caracterizada", o valor `DESCARACTERIZADA` é exibido como `--` e `DESCARACTERIZADA ADESIVO GOV/RN` é exibido como `ADESIVO GOV/RN`, em qualquer tabela ou filtro da página; os dados internos continuam com o valor original.
 
 Qualquer alteração nessas listas (troca de servidor, movimentação de viatura entre locais etc.) exige editar diretamente os arrays correspondentes (`LOCAIS`, `SETORES`, `FINALIDADES`, `SERVIDORES`, `VEICULOS`) no início do `<script>` do `index.html`.
