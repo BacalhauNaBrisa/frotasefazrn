@@ -252,6 +252,10 @@ h2.card-header .icon-chevron{transition:transform .2s ease;}
 	min-height:14px;
 }
 .field .field-msg.ok{color:var(--green-700);}
+.field .field-msg.hint{color:var(--ink-400);}
+.field input[type="checkbox"]{width:auto; margin-right:6px; vertical-align:middle;}
+.field label.chk{text-transform:none; font-size:13px; letter-spacing:0; color:var(--ink-600); cursor:pointer;}
+#srvConfirmMsg{font-size:11px; color:var(--danger); min-height:14px; margin-bottom:8px;}
 
 .form-actions{
 	display:flex;
@@ -434,6 +438,7 @@ table.datatable{
 	min-width:1440px;
 	font-size:12.5px;
 }
+table.datatable#tblServidores{min-width:0;}
 table.datatable thead th{
 	position:sticky;
 	top:0;
@@ -735,6 +740,33 @@ footer a{color:var(--ink-600);}
 		</div>
 	</div>
 
+	<div class="card locked collapsed" id="cardServidores">
+		<h2 class="card-header" title="Faça login para acessar"><span class="card-title-group">Servidores <span class="tag">cadastro</span></span>
+			<span class="card-toggle-icon">
+				<svg class="icon-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+				<svg class="icon-lock" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+			</span>
+		</h2>
+		<div class="card-body">
+		<p class="lead">Servidores cadastrados no Firebase, com a matrícula e o perfil de cada um. Clique no título de uma coluna para ordenar e use os campos abaixo dos títulos para filtrar.</p>
+
+		<div class="table-toolbar">
+			<span class="table-refresh-note" id="servidoresTotal"></span>
+			<button type="button" class="btn-primary btn-export" id="btnAdicionarServidor">Adicionar servidor</button>
+		</div>
+
+		<div class="table-wrap">
+			<table class="datatable" id="tblServidores">
+				<thead>
+					<tr id="servidoresHeaderRow"></tr>
+					<tr class="filter-row" id="servidoresFilterRow"></tr>
+				</thead>
+				<tbody id="servidoresBody"></tbody>
+			</table>
+		</div>
+		</div>
+	</div>
+
 </div>
 
 <footer>
@@ -771,6 +803,40 @@ footer a{color:var(--ink-600);}
 			<div class="modal-actions">
 				<button type="button" class="btn-secondary" id="confirmFechar">Fechar</button>
 			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal-overlay hidden" id="modalServidor">
+	<div class="modal-box">
+		<h3>Adicionar servidor</h3>
+		<div class="field">
+			<label for="srvNome">Nome completo do(a) servidor(a)</label>
+			<input type="text" id="srvNome" maxlength="100" autocomplete="off"/>
+		</div>
+		<div class="field">
+			<label for="srvMatricula">Matrícula</label>
+			<input type="text" id="srvMatricula" inputmode="numeric" maxlength="7" placeholder="0000000" autocomplete="off"/>
+			<div class="field-msg hint" id="srvMatriculaMsg">Apenas números; com menos de 7 dígitos, serão completados com zeros à esquerda.</div>
+		</div>
+		<div class="field">
+			<label class="chk"><input type="checkbox" id="srvGestor"/> Gestor?</label>
+		</div>
+		<div class="modal-actions">
+			<button type="button" class="btn-secondary" id="srvCancelar">Cancelar</button>
+			<button type="button" class="btn-primary" id="srvAdicionar" disabled>Adicionar</button>
+		</div>
+	</div>
+</div>
+
+<div class="modal-overlay hidden" id="modalServidorConfirmar">
+	<div class="modal-box">
+		<h3>Confirmar novo servidor</h3>
+		<div class="modal-resumo" id="srvResumo"></div>
+		<div class="field-msg" id="srvConfirmMsg"></div>
+		<div class="modal-actions">
+			<button type="button" class="btn-secondary" id="srvConfirmVoltar">Voltar</button>
+			<button type="button" class="btn-primary" id="srvConfirmar">Confirmar</button>
 		</div>
 	</div>
 </div>
@@ -835,7 +901,7 @@ function definirServidores(mapa) {
 	Object.keys(mapa || {}).forEach(function(mat){
 		var v = mapa[mat];
 		if (v && typeof v.nome === 'string' && /^\d{7}$/.test(mat)) {
-			novo[mat] = { nome: v.nome, matricula: mat, gestor: v.gestor === true };
+			novo[mat] = { nome: v.nome.replace(/[<>&"]/g, '').trim(), matricula: mat, gestor: v.gestor === true };
 		}
 	});
 	SERVIDOR_BY_MAT = novo;
@@ -983,6 +1049,7 @@ function setSyncBadge(modo) {
 function renderTudo() {
 	renderFrota();
 	renderAgendados();
+	renderServidores();
 }
 
 // Lê o cadastro de servidores do Firebase (somente leitura) e mantém uma cópia em cache.
@@ -1000,6 +1067,7 @@ function iniciarSincronizacaoServidores() {
 }
 
 function aoAtualizarServidores() {
+	renderServidores();
 	if ($('#inpMatricula').length) formatarMatriculaInput();
 	atualizarEstadoBotao();
 	if (currentUser) {
@@ -1211,8 +1279,10 @@ function aplicarEstadoPosLogin() {
 
 	if (gestor) {
 		setCardLockCollapse($('#cardFrota'), false, false);
+		setCardLockCollapse($('#cardServidores'), false, false);
 	} else {
 		setCardLockCollapse($('#cardFrota'), true, true);
+		setCardLockCollapse($('#cardServidores'), true, true);
 	}
 
 	renderTudo();
@@ -1253,6 +1323,7 @@ function tentarLogout() {
 	setCardLockCollapse($('#cardAgendamento'), true, true);
 	setCardLockCollapse($('#cardAgendados'), true, true);
 	setCardLockCollapse($('#cardFrota'), true, true);
+	setCardLockCollapse($('#cardServidores'), true, true);
 
 	renderTudo();
 }
@@ -1759,6 +1830,122 @@ function renderFrota() {
 	tabelaFrota.render();
 }
 
+// ======================= CARD "SERVIDORES" (somente gestores) =======================
+
+var SERVIDORES_COLUNAS = [
+	{ id:'nome',         titulo:'Nome',      tipo:'texto' },
+	{ id:'matriculaFmt', titulo:'Matrícula', tipo:'texto', sortValue:function(l){ return l.matricula; } },
+	{ id:'perfil',       titulo:'Perfil',    tipo:'select', opcoes:['Gestor','Servidor'] }
+];
+
+function formatarMatricula(m) {
+	return m.slice(0,3) + '.' + m.slice(3,6) + '-' + m.slice(6);
+}
+
+function construirLinhasServidores() {
+	return Object.keys(SERVIDOR_BY_MAT).map(function(mat){
+		var s = SERVIDOR_BY_MAT[mat];
+		return { nome: s.nome, matricula: mat, matriculaFmt: formatarMatricula(mat), perfil: s.gestor ? 'Gestor' : 'Servidor' };
+	});
+}
+
+function montarLinhaServidores(l) {
+	var $row = $('<tr>');
+	$row.append($('<td>').text(l.nome));
+	$row.append($('<td class="num">').text(l.matriculaFmt));
+	$row.append($('<td>').text(l.perfil));
+	return $row;
+}
+
+var tabelaServidores = null;
+
+function renderServidores() {
+	if (!tabelaServidores) return;
+	tabelaServidores.render();
+	$('#servidoresTotal').text(Object.keys(SERVIDOR_BY_MAT).length + ' servidores cadastrados.');
+}
+
+var servidorPendente = null;
+
+function matriculaServidorDigitos() {
+	return $('#srvMatricula').val().replace(/\D/g, '').slice(0, 7);
+}
+
+function matriculaServidorCompleta() {
+	var d = matriculaServidorDigitos();
+	return d.length ? ('0000000' + d).slice(-7) : '';
+}
+
+function atualizarEstadoModalServidor() {
+	var nome = $('#srvNome').val().replace(/[<>&"]/g, '').trim();
+	var mat = matriculaServidorCompleta();
+	var $msg = $('#srvMatriculaMsg');
+	var ok = nome.length > 0 && mat.length === 7 && /[1-9]/.test(mat);
+	if (mat && SERVIDOR_BY_MAT[mat]) {
+		$msg.text('Matrícula já cadastrada para ' + SERVIDOR_BY_MAT[mat].nome + '.').removeClass('hint');
+		ok = false;
+	} else {
+		$msg.text('Apenas números; com menos de 7 dígitos, serão completados com zeros à esquerda.').addClass('hint');
+	}
+	$('#srvAdicionar').prop('disabled', !ok);
+}
+
+function abrirModalServidor() {
+	$('#srvNome').val('');
+	$('#srvMatricula').val('');
+	$('#srvGestor').prop('checked', false);
+	atualizarEstadoModalServidor();
+	$('#modalServidor').removeClass('hidden');
+	setTimeout(function(){ $('#srvNome').trigger('focus'); }, 0);
+}
+
+function fecharModaisServidor() {
+	$('#modalServidor, #modalServidorConfirmar').addClass('hidden');
+	servidorPendente = null;
+}
+
+function abrirConfirmacaoServidor() {
+	var nome = $('#srvNome').val().replace(/[<>&"]/g, '').trim();
+	var mat = matriculaServidorCompleta();
+	servidorPendente = { nome: nome, matricula: mat, gestor: $('#srvGestor').is(':checked') };
+	$('#srvResumo').empty()
+		.append($('<p>').append('<b>Nome:</b> ').append(document.createTextNode(nome)))
+		.append($('<p>').append('<b>Matrícula:</b> ').append(document.createTextNode(formatarMatricula(mat))))
+		.append($('<p>').append('<b>Gestor:</b> ').append(document.createTextNode(servidorPendente.gestor ? 'Sim' : 'Não')));
+	$('#srvConfirmMsg').text('');
+	$('#srvConfirmar').prop('disabled', false);
+	$('#modalServidor').addClass('hidden');
+	$('#modalServidorConfirmar').removeClass('hidden');
+}
+
+function gravarServidor() {
+	if (!servidorPendente || !isGestorAtivo()) return;
+	if (!(firebaseAtivo && db)) {
+		$('#srvConfirmMsg').text('Sem conexão com o Firebase: não foi possível gravar. Tente novamente.');
+		return;
+	}
+	var p = servidorPendente;
+	var dados = { nome: p.nome };
+	if (p.gestor) dados.gestor = true;
+
+	$('#srvConfirmar').prop('disabled', true);
+	// transaction: só grava se a matrícula ainda não existir (não sobrescreve cadastro existente)
+	db.ref(SERVIDORES_PATH + '/' + p.matricula).transaction(function(atual){
+		return atual ? undefined : dados;
+	}, function(erro, confirmado) {
+		if (erro) {
+			console.error('Erro ao gravar servidor:', erro);
+			$('#srvConfirmMsg').text('Não foi possível gravar (verifique as regras de escrita do Firebase em "servidores"). Tente novamente.');
+			$('#srvConfirmar').prop('disabled', false);
+		} else if (!confirmado) {
+			$('#srvConfirmMsg').text('Esta matrícula já está cadastrada.');
+			$('#srvConfirmar').prop('disabled', false);
+		} else {
+			fecharModaisServidor();
+		}
+	});
+}
+
 // ======================= DASHBOARD "AGENDADOS" =======================
 
 var AGENDADOS_COLUNAS = [
@@ -1954,6 +2141,35 @@ $(document).ready(function(){
 		montarLinha: montarLinhaAgendados,
 		sortPadrao: 'retiradaFmt'
 	});
+
+	tabelaServidores = new TabelaInterativa({
+		colunas: SERVIDORES_COLUNAS,
+		headerRowSelector: '#servidoresHeaderRow',
+		filterRowSelector: '#servidoresFilterRow',
+		bodySelector: '#servidoresBody',
+		obterLinhas: function(){ return isGestorAtivo() ? construirLinhasServidores() : []; },
+		montarLinha: montarLinhaServidores,
+		sortPadrao: 'nome'
+	});
+
+	$('#btnAdicionarServidor').on('click', function(){ if (isGestorAtivo()) abrirModalServidor(); });
+	$('#srvNome').on('input', atualizarEstadoModalServidor);
+	$('#srvMatricula').on('input', function(){
+		$(this).val($(this).val().replace(/\D/g, '').slice(0, 7));
+		atualizarEstadoModalServidor();
+	});
+	$('#srvMatricula').on('blur', function(){
+		var m = matriculaServidorCompleta();
+		if (m) $(this).val(m);
+		atualizarEstadoModalServidor();
+	});
+	$('#srvCancelar').on('click', fecharModaisServidor);
+	$('#srvAdicionar').on('click', abrirConfirmacaoServidor);
+	$('#srvConfirmVoltar').on('click', function(){
+		$('#modalServidorConfirmar').addClass('hidden');
+		$('#modalServidor').removeClass('hidden');
+	});
+	$('#srvConfirmar').on('click', gravarServidor);
 
 	carregarServidoresCache();
 	iniciarSincronizacao();

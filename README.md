@@ -135,6 +135,8 @@ Qualquer alteração nessas listas (troca de servidor, movimentação de viatura
 
 ## Cadastro de servidores no Firebase
 
+Os gestores também podem gerenciar o cadastro pela própria página, no card **"Servidores"** (logo abaixo de "Frota de veículos", visível apenas para gestores). Ele lista todos os servidores do Firebase com nome, matrícula e perfil (ordenável e filtrável). O botão **"Adicionar servidor"** abre um modal com **Nome completo**, **Matrícula** (somente números; com menos de 7 dígitos é completada com zeros à esquerda) e a caixa **"Gestor?"**; o botão "Adicionar" só habilita com nome e matrícula preenchidos e uma matrícula ainda não cadastrada. Em seguida, um segundo modal mostra os dados para conferência e, ao **Confirmar**, o servidor é gravado em `servidores/<matrícula>` (a gravação não sobrescreve uma matrícula já existente). **Para isso funcionar, as regras do Firebase precisam permitir escrita em `servidores`** (ver "Regras" abaixo).
+
 Nomes, matrículas e perfil (gestor ou não) **não ficam mais no `index.html`**: ficam no Firebase Realtime Database, no caminho `servidores/<matrícula>`, separado de `reservas` (onde ficam os agendamentos). Formato de cada nó:
 
 ```json
@@ -145,7 +147,7 @@ Nomes, matrículas e perfil (gestor ou não) **não ficam mais no `index.html`**
 - A matrícula (7 dígitos, com zeros à esquerda quando houver) é a chave do nó; `gestor: true` só é gravado para gestores.
 - A página lê `servidores` ao abrir (e acompanha alterações em tempo real) e guarda uma cópia em `localStorage` (`frotasefazrn_servidores_v1`) como reserva, usada se o Firebase estiver indisponível. Enquanto o cadastro não carrega, o login exibe "Cadastro de servidores ainda não carregado".
 - **Carga inicial:** no console do Firebase, abra **Realtime Database → Dados**, clique no **⋮** do nó raiz → **Importar JSON**, selecione `servidores.json` (deste repositório) e, ao importar, escolha o local `servidores`. Se a opção de importar só estiver disponível no nó raiz, crie antes o nó `servidores` vazio e importe nele. **Atenção:** nunca importe na raiz — isso substituiria `reservas`.
-- **Manutenção:** para incluir, renomear ou remover alguém, edite diretamente o nó `servidores` no console do Firebase; não é preciso alterar o código nem fazer commit. Para tornar alguém gestor, adicione `"gestor": true`.
+- **Manutenção:** para incluir alguém, use o card "Servidores" (gestores); para renomear ou remover, edite diretamente o nó `servidores` no console do Firebase; não é preciso alterar o código nem fazer commit. Para tornar alguém gestor, adicione `"gestor": true`.
 - **Regras (recomendado):** como `servidores` só é lido pela página, as regras podem deixá-lo somente leitura:
   ```json
   {
@@ -155,7 +157,7 @@ Nomes, matrículas e perfil (gestor ou não) **não ficam mais no `index.html`**
     }
   }
   ```
-  Com isso, só quem acessa o console do Firebase (autenticado) consegue alterar o cadastro ou o perfil de gestor. Teste a regra no simulador do console antes de publicar.
+  Com isso, só quem acessa o console do Firebase (autenticado) consegue alterar o cadastro ou o perfil de gestor — **mas o botão "Adicionar servidor" do card passa a ser recusado** (a página mostra "Não foi possível gravar"). Para usar o card, `servidores` precisa estar com `".write": true`, o que, sem autenticação, permite que qualquer pessoa com o link do projeto altere o cadastro (inclusive se declarar gestor). Escolha entre conveniência (escrita liberada) e segurança (somente leitura + edição pelo console).
 
 ## Tecnologias utilizadas
 
