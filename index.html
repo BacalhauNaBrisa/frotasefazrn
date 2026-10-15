@@ -812,7 +812,7 @@ footer a{color:var(--ink-600);}
 		<h3>Adicionar servidor</h3>
 		<div class="field">
 			<label for="srvNome">Nome completo do(a) servidor(a)</label>
-			<input type="text" id="srvNome" maxlength="100" autocomplete="off"/>
+			<input type="text" id="srvNome" maxlength="100" autocomplete="off" style="text-transform:uppercase"/>
 		</div>
 		<div class="field">
 			<label for="srvMatricula">Matrícula</label>
@@ -901,7 +901,7 @@ function definirServidores(mapa) {
 	Object.keys(mapa || {}).forEach(function(mat){
 		var v = mapa[mat];
 		if (v && typeof v.nome === 'string' && /^\d{7}$/.test(mat)) {
-			novo[mat] = { nome: v.nome.replace(/[<>&"]/g, '').trim(), matricula: mat, gestor: v.gestor === true };
+			novo[mat] = { nome: v.nome.replace(/[<>&"]/g, '').trim().toLocaleUpperCase('pt-BR'), matricula: mat, gestor: v.gestor === true };
 		}
 	});
 	SERVIDOR_BY_MAT = novo;
@@ -1692,6 +1692,10 @@ TabelaInterativa.prototype._montarCabecalho = function() {
 	});
 };
 
+function semAcento(t) {
+	return String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
 TabelaInterativa.prototype._linhasProcessadas = function() {
 	var self = this;
 	var linhas = this.obterLinhas();
@@ -1703,7 +1707,7 @@ TabelaInterativa.prototype._linhasProcessadas = function() {
 		linhas = linhas.filter(function(l){
 			if (coluna && coluna.tipo === 'select') return String(l[col]) === valor;
 			var alvo = l[col] === null || l[col] === undefined ? '' : String(l[col]);
-			return alvo.toLowerCase().indexOf(valor.toLowerCase()) !== -1;
+			return semAcento(alvo).indexOf(semAcento(valor)) !== -1;
 		});
 	});
 
@@ -1716,8 +1720,12 @@ TabelaInterativa.prototype._linhasProcessadas = function() {
 			av = av ? av.getTime() : -Infinity;
 			bv = bv ? bv.getTime() : -Infinity;
 		} else {
-			av = (av === null || av === undefined) ? '' : String(av).toLowerCase();
-			bv = (bv === null || bv === undefined) ? '' : String(bv).toLowerCase();
+			av = (av === null || av === undefined) ? '' : String(av);
+			bv = (bv === null || bv === undefined) ? '' : String(bv);
+			// comparação alfabética sensível a acentos (Á fica junto de A, não depois de Z)
+			var cmp = av.localeCompare(bv, 'pt-BR', { numeric: true, sensitivity: 'base' });
+			if (cmp === 0) cmp = av.localeCompare(bv, 'pt-BR', { numeric: true });
+			return dir === 'asc' ? cmp : -cmp;
 		}
 		if (av < bv) return dir === 'asc' ? -1 : 1;
 		if (av > bv) return dir === 'asc' ? 1 : -1;
@@ -1905,7 +1913,7 @@ function fecharModaisServidor() {
 }
 
 function abrirConfirmacaoServidor() {
-	var nome = $('#srvNome').val().replace(/[<>&"]/g, '').trim();
+	var nome = $('#srvNome').val().replace(/[<>&"]/g, '').trim().replace(/\s+/g, ' ').toLocaleUpperCase('pt-BR');
 	var mat = matriculaServidorCompleta();
 	servidorPendente = { nome: nome, matricula: mat, gestor: $('#srvGestor').is(':checked') };
 	$('#srvResumo').empty()
