@@ -718,7 +718,7 @@ footer a{color:var(--ink-600);}
 			</span>
 		</h2>
 		<div class="card-body">
-		<p class="lead">Situação, em tempo real, de todas as 56 viaturas da frota. Clique no título de uma coluna para ordenar e use os campos abaixo dos títulos para filtrar.</p>
+		<p class="lead">Situação, em tempo real, de todas as <span id="frotaTotal">0</span> viaturas da frota. Clique no título de uma coluna para ordenar e use os campos abaixo dos títulos para filtrar.</p>
 
 		<div class="table-toolbar">
 			<span class="table-refresh-note">Atualizado automaticamente a cada 15 segundos, conforme o horário de Natal.</span>
@@ -920,66 +920,17 @@ function salvarServidoresCache(mapa) {
 	catch (e) { /* ignora: o cache é apenas uma reserva */ }
 }
 
-var VEICULOS = [
-	{ veiculo:"CAMINHÃO",                              placa:"OWC-0742", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
-	{ veiculo:"CAMINHONETE",                           placa:"RQB-1C59", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
-	{ veiculo:"CAMINHONETE",                           placa:"RQB-1C69", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
-	{ veiculo:"CAMINHONETE",                           placa:"RQB-1C78", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
-	{ veiculo:"CRONOS DRIVE 1.3",                      placa:"RPJ-8D82", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
-	{ veiculo:"CROSS SENSE TSI",                       placa:"RGM-7D30", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
-	{ veiculo:"CROSS SENSE TSI",                       placa:"RGM-2J49", caracterizada:"CARACTERIZADA",                        lotado:"NIF",        propriedade:"PRÓPRIA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D01",       placa:"TSR-8G80", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D02",       placa:"TSR-8G50", caracterizada:"DESCARACTERIZADA ADESIVO GOV/RN",      lotado:"NIF",        propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D03",       placa:"TSQ-3H30", caracterizada:"DESCARACTERIZADA ADESIVO GOV/RN",      lotado:"NIF",        propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D04",       placa:"TSQ-3H10", caracterizada:"DESCARACTERIZADA ADESIVO GOV/RN",      lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D05",       placa:"TSV-6G95", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D06",       placa:"TST-7B14", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D07",       placa:"TSV-6H57", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D08",       placa:"TST-6F56", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D09",       placa:"TST-7H39", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D10",       placa:"TST-2I56", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D11",       placa:"TST-2I47", caracterizada:"DESCARACTERIZADA",                     lotado:"6 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D12",       placa:"TST-1H96", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - D13",       placa:"TST-2I55", caracterizada:"DESCARACTERIZADA",                     lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - PM",        placa:"TST-9D90", caracterizada:"CARACTERIZADA",                        lotado:"NIF",        propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - PM",        placa:"TSW-4E28", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - RESERVA R01", placa:"TSQ-3H40", caracterizada:"CARACTERIZADA",                      lotado:"6 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - RESERVA R02", placa:"TSR-8F80", caracterizada:"CARACTERIZADA",                      lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT001",     placa:"TSR-8E20", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT002",     placa:"TSR-8F20", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT003",     placa:"TSR-8G60", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT004",     placa:"TSR-8H30", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT005",     placa:"TSR-8H40", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT006",     placa:"TSR-8H70", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT007",     placa:"TSS-1A30", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT008",     placa:"TSS-6G30", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT009",     placa:"TSS-6G50", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT010",     placa:"TSS-6G80", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT011",     placa:"TSS-6H20", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT012",     placa:"TSS-0J60", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT013",     placa:"TSR-8H80", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT014",     placa:"TSS-6G70", caracterizada:"CARACTERIZADA",                        lotado:"3 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT015",     placa:"TSR-8D90", caracterizada:"CARACTERIZADA",                        lotado:"NIF",        propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT016",     placa:"TSS-6G60", caracterizada:"CARACTERIZADA",                        lotado:"NIF",        propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT017",     placa:"TSR-8D50", caracterizada:"CARACTERIZADA",                        lotado:"5 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT018",     placa:"TSS-1A70", caracterizada:"CARACTERIZADA",                        lotado:"5 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT019",     placa:"TSR-8C90", caracterizada:"CARACTERIZADA",                        lotado:"2 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT020",     placa:"TSR-8H10", caracterizada:"CARACTERIZADA",                        lotado:"3 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT021",     placa:"TSR-8D20", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT022",     placa:"TSR-8E70", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT023",     placa:"TSR-8G20", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT024",     placa:"TSS-1A50", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"FIAT/TORO VOLC - TD450 AT - VT025",     placa:"TSS-6G40", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"ALUGADA" },
-	{ veiculo:"LOGAN",                                 placa:"OWA-8492", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
-	{ veiculo:"LOGAN",                                 placa:"OWA-8232", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
-	{ veiculo:"MERCEDES VAN",                          placa:"REQ-3I21", caracterizada:"CARACTERIZADA",                        lotado:"6 URT",      propriedade:"PRÓPRIA" },
-	{ veiculo:"MERCEDES VAN",                          placa:"REQ-3I22", caracterizada:"CARACTERIZADA",                        lotado:"3 URT",      propriedade:"PRÓPRIA" },
-	{ veiculo:"MERCEDES VAN",                          placa:"REQ-3I24", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
-	{ veiculo:"SPIN",                                  placa:"OWD-5079", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
-	{ veiculo:"SPIN",                                  placa:"OVZ-3756", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" }
-];
+// O cadastro de veículos (veículo, placa, caracterização, local de lotação e propriedade) NÃO fica
+// mais neste arquivo: é lido do Firebase Realtime Database, no caminho "veiculos/<placa>"
+// (ex.: veiculos/OWC-0742 = { "veiculo": "CAMINHÃO", "caracterizada": "CARACTERIZADA",
+// "lotado": "Sede Sefaz", "propriedade": "PRÓPRIA" }). Uma cópia fica em localStorage como reserva.
+var VEICULOS_PATH = 'veiculos'; // não altere: caminho usado dentro do banco de dados
+var VEICULOS_CACHE_KEY = 'frotasefazrn_veiculos_v1';
+var VEICULOS = [];
 var VEICULO_BY_PLACA = {};
-VEICULOS.forEach(function(v){ VEICULO_BY_PLACA[v.placa] = v; });
+var veiculosCarregados = false;
+var CARACTERIZADAS_DISTINTAS = []; // preenchidos em definirVeiculos (mesmo array, alterado no lugar)
+var PROPRIEDADES_DISTINTAS = [];
 
 function formatCaracterizada(raw) {
 	// Exibição simplificada do campo "Caracterizada": veículos descaracterizados
@@ -990,10 +941,48 @@ function formatCaracterizada(raw) {
 	return raw;
 }
 
-var CARACTERIZADAS_DISTINTAS = Array.from(new Set(VEICULOS.map(function(v){ return formatCaracterizada(v.caracterizada); })))
-	.sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
-var PROPRIEDADES_DISTINTAS = Array.from(new Set(VEICULOS.map(function(v){ return v.propriedade; })))
-	.sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
+function limparTextoCadastro(t) {
+	return String(t).replace(/[<>&"]/g, '').trim();
+}
+
+function definirVeiculos(mapa) {
+	var lista = [];
+	Object.keys(mapa || {}).forEach(function(placa){
+		var v = mapa[placa];
+		if (!v || typeof v !== 'object' || !/^[A-Za-z0-9-]{5,10}$/.test(placa)) return;
+		if (['veiculo','caracterizada','lotado','propriedade'].some(function(k){ return typeof v[k] !== 'string'; })) return;
+		lista.push({
+			veiculo: limparTextoCadastro(v.veiculo),
+			placa: placa,
+			caracterizada: limparTextoCadastro(v.caracterizada),
+			lotado: limparTextoCadastro(v.lotado),
+			propriedade: limparTextoCadastro(v.propriedade)
+		});
+	});
+	VEICULOS = lista;
+	VEICULO_BY_PLACA = {};
+	VEICULOS.forEach(function(v){ VEICULO_BY_PLACA[v.placa] = v; });
+	veiculosCarregados = VEICULOS.length > 0;
+
+	var carac = Array.from(new Set(VEICULOS.map(function(v){ return formatCaracterizada(v.caracterizada); })))
+		.sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
+	var prop = Array.from(new Set(VEICULOS.map(function(v){ return v.propriedade; })))
+		.sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
+	CARACTERIZADAS_DISTINTAS.length = 0; Array.prototype.push.apply(CARACTERIZADAS_DISTINTAS, carac);
+	PROPRIEDADES_DISTINTAS.length = 0;   Array.prototype.push.apply(PROPRIEDADES_DISTINTAS, prop);
+}
+
+function carregarVeiculosCache() {
+	try {
+		var raw = localStorage.getItem(VEICULOS_CACHE_KEY);
+		if (raw) definirVeiculos(JSON.parse(raw));
+	} catch (e) { /* sem cache disponível */ }
+}
+
+function salvarVeiculosCache(mapa) {
+	try { localStorage.setItem(VEICULOS_CACHE_KEY, JSON.stringify(mapa)); }
+	catch (e) { /* ignora: o cache é apenas uma reserva */ }
+}
 
 // ======================= FIREBASE (SINCRONIZAÇÃO ENTRE TODOS OS USUÁRIOS) =======================
 //
@@ -1066,6 +1055,28 @@ function iniciarSincronizacaoServidores() {
 	});
 }
 
+// Lê o cadastro de veículos do Firebase (somente leitura) e mantém uma cópia em cache.
+function iniciarSincronizacaoVeiculos() {
+	db.ref(VEICULOS_PATH).on('value', function(snapshot) {
+		var mapa = {};
+		snapshot.forEach(function(filho){ mapa[filho.key] = filho.val(); });
+		if (Object.keys(mapa).length === 0) return; // nó vazio: mantém o cache, se houver
+		definirVeiculos(mapa);
+		salvarVeiculosCache(mapa);
+		aoAtualizarVeiculos();
+	}, function(erro) {
+		console.error('Erro ao ler o cadastro de veículos:', erro);
+	});
+}
+
+function aoAtualizarVeiculos() {
+	if (tabelaFrota) tabelaFrota.atualizarOpcoes();
+	if (tabelaAgendados) tabelaAgendados.atualizarOpcoes();
+	$('#frotaTotal').text(VEICULOS.length);
+	renderTudo();
+	if (!$('#availWrap').hasClass('hidden')) verificarDisponibilidade(false);
+}
+
 function aoAtualizarServidores() {
 	renderServidores();
 	if ($('#inpMatricula').length) formatarMatriculaInput();
@@ -1102,6 +1113,7 @@ function iniciarSincronizacao() {
 	}
 
 	iniciarSincronizacaoServidores();
+	iniciarSincronizacaoVeiculos();
 
 	db.ref(FIREBASE_PATH).on('value', function(snapshot) {
 		firebaseAtivo = true;
@@ -1692,6 +1704,20 @@ TabelaInterativa.prototype._montarCabecalho = function() {
 	});
 };
 
+// Recria as opções dos filtros do tipo "select" (usado quando o cadastro de veículos muda).
+TabelaInterativa.prototype.atualizarOpcoes = function() {
+	var self = this;
+	this.colunas.forEach(function(c){
+		if (c.tipo !== 'select') return;
+		var $sel = self.$filterRow.find('select[data-col="' + c.id + '"]');
+		var atual = $sel.val();
+		$sel.empty().append('<option value="">Todos</option>');
+		(c.opcoes || []).forEach(function(o){ $sel.append($('<option>').attr('value', o).text(o)); });
+		if (atual && (c.opcoes || []).indexOf(atual) !== -1) $sel.val(atual);
+		else { $sel.val(''); self.filtros[c.id] = ''; }
+	});
+};
+
 function semAcento(t) {
 	return String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
@@ -2180,6 +2206,8 @@ $(document).ready(function(){
 	$('#srvConfirmar').on('click', gravarServidor);
 
 	carregarServidoresCache();
+	carregarVeiculosCache();
+	aoAtualizarVeiculos();
 	iniciarSincronizacao();
 
 	$('#inpLoginMatricula').on('input', formatarMatriculaLoginInput);

@@ -16,7 +16,7 @@
 Este repositório contém uma única página HTML autocontida (`index.html`) que permite:
 
 0. **Identificar-se pela matrícula** (login simples, sem senha) para revelar o agendamento e os próprios agendamentos, com um nível de acesso ampliado para os gestores da SUMAT;
-1. **Agendar** a retirada e a devolução de uma das 56 viaturas da frota, verificando em tempo real quais estão disponíveis num determinado local, período e finalidade — a reserva só é gravada após confirmação num modal, que em seguida exibe o código do agendamento;
+1. **Agendar** a retirada e a devolução de uma das viaturas da frota, verificando em tempo real quais estão disponíveis num determinado local, período e finalidade — a reserva só é gravada após confirmação num modal, que em seguida exibe o código do agendamento;
 2. **Gerenciar os agendamentos** já feitos, acompanhando o status de cada um (agendado, em uso, expirado ou cancelado), cancelando quando necessário e registrando manualmente a devolução real (com quilometragem e observações);
 3. **Acompanhar**, ao vivo, o status de toda a frota (em uso / disponível), com filtros e ordenação por coluna.
 
@@ -69,7 +69,7 @@ O campo **status** desse módulo é calculado em tempo real e é diferente do st
 
 ### 4. Frota de veículos
 
-Logo abaixo, a tabela "Frota de veículos" — visível apenas para gestores logados (ver seção [Login](#1-login) acima) — mostra o status ao vivo das 56 viaturas — recalculado automaticamente a cada 15 segundos e a cada nova reserva, cancelamento ou registro de devolução —, nesta ordem de colunas: veículo, lotado, placa, caracterização, propriedade, status (**EM USO**, em amarelo, ou **DISPONÍVEL**, em verde), responsável, setor solicitante, finalidade, data/hora de retirada e data/hora de devolução. Clique no título de qualquer coluna para ordenar (crescente/decrescente) e use os campos logo abaixo dos títulos para filtrar por texto ou por valor. Reservas canceladas ou já com devolução manual registrada não contam para o status "EM USO". Assim como em "Agendados", o botão **"Gerar relatório em .xlsx"** no canto superior direito baixa uma planilha com as linhas e colunas atualmente exibidas na tabela.
+Logo abaixo, a tabela "Frota de veículos" — visível apenas para gestores logados (ver seção [Login](#1-login) acima) — mostra o status ao vivo das viaturas cadastradas — recalculado automaticamente a cada 15 segundos e a cada nova reserva, cancelamento ou registro de devolução —, nesta ordem de colunas: veículo, lotado, placa, caracterização, propriedade, status (**EM USO**, em amarelo, ou **DISPONÍVEL**, em verde), responsável, setor solicitante, finalidade, data/hora de retirada e data/hora de devolução. Clique no título de qualquer coluna para ordenar (crescente/decrescente) e use os campos logo abaixo dos títulos para filtrar por texto ou por valor. Reservas canceladas ou já com devolução manual registrada não contam para o status "EM USO". Assim como em "Agendados", o botão **"Gerar relatório em .xlsx"** no canto superior direito baixa uma planilha com as linhas e colunas atualmente exibidas na tabela.
 
 ## Código de agendamento
 
@@ -129,9 +129,9 @@ A barra de status acima do formulário de agendamento exibe **"Sincronizado com 
 - **19 setores solicitantes**: SUMAT, SUMAT/NIF, SUCADI, SUFISE, SUSCOMEX, COFIS, CACE, SUDEFI, GS, Central de Veículos, COGEF, COTIC, 1 URT, 2 URT, 3 URT, 5 URT, 6 URT, 7 URT e COEF.
 - **3 finalidades**: Itinerância, Plantão e Visita Institucional.
 - **131 servidores** cadastrados no Firebase (nó `servidores`, por matrícula), usados para validar o campo de matrícula no login, no agendamento e no cancelamento — a lista original de 48 foi ampliada com os 80 condutores da escala de auditores 24h da SUMAT. Duas matrículas (as dos responsáveis pela SUMAT) têm o campo `gestor: true`, dando acesso ampliado a "Agendados" e "Frota de veículos" (ver seção [Login](#1-login)).
-- **56 viaturas** da frota, com veículo, placa, caracterização, local de lotação e propriedade (própria/alugada). No campo "Caracterizada", o valor `DESCARACTERIZADA` é exibido como `--` e `DESCARACTERIZADA ADESIVO GOV/RN` é exibido como `ADESIVO GOV/RN`, em qualquer tabela ou filtro da página; os dados internos continuam com o valor original.
+- **56 viaturas** da frota (cadastradas no Firebase, nó `veiculos`, por placa — ver seção [Cadastro de veículos no Firebase](#cadastro-de-veículos-no-firebase)), com veículo, placa, caracterização, local de lotação e propriedade (própria/alugada). No campo "Caracterizada", o valor `DESCARACTERIZADA` é exibido como `--` e `DESCARACTERIZADA ADESIVO GOV/RN` é exibido como `ADESIVO GOV/RN`, em qualquer tabela ou filtro da página; os dados internos continuam com o valor original.
 
-Qualquer alteração nessas listas (troca de servidor, movimentação de viatura entre locais etc.) exige editar diretamente os arrays correspondentes (os servidores não ficam mais no `index.html`: ver seção abaixo) (`LOCAIS`, `SETORES`, `FINALIDADES`, `VEICULOS`) no início do `<script>` do `index.html`.
+Alterações em locais, setores e finalidades exigem editar diretamente os arrays correspondentes (`LOCAIS`, `SETORES`, `FINALIDADES`) no início do `<script>` do `index.html`. Servidores e veículos **não ficam mais no `index.html`**: estão no Firebase (ver seções abaixo).
 
 ## Cadastro de servidores no Firebase
 
@@ -153,11 +153,26 @@ Nomes, matrículas e perfil (gestor ou não) **não ficam mais no `index.html`**
   {
     "rules": {
       "reservas":   { ".read": true, ".write": true },
-      "servidores": { ".read": true, ".write": false }
+      "servidores": { ".read": true, ".write": false },
+      "veiculos":   { ".read": true, ".write": false }
     }
   }
   ```
   Com isso, só quem acessa o console do Firebase (autenticado) consegue alterar o cadastro ou o perfil de gestor — **mas o botão "Adicionar servidor" do card passa a ser recusado** (a página mostra "Não foi possível gravar"). Para usar o card, `servidores` precisa estar com `".write": true`, o que, sem autenticação, permite que qualquer pessoa com o link do projeto altere o cadastro (inclusive se declarar gestor). Escolha entre conveniência (escrita liberada) e segurança (somente leitura + edição pelo console).
+
+## Cadastro de veículos no Firebase
+
+Os dados das viaturas (veículo, placa, caracterização, local de lotação e propriedade) também **não ficam mais no `index.html`**: ficam no Firebase, no caminho `veiculos/<placa>`, separado de `reservas` e `servidores`. Formato de cada nó:
+
+```json
+"OWC-0742": { "veiculo": "CAMINHÃO", "caracterizada": "CARACTERIZADA", "lotado": "Sede Sefaz", "propriedade": "PRÓPRIA" }
+```
+
+- A placa (com hífen, como já aparece na página) é a chave do nó; os agendamentos continuam apontando para a viatura pela placa, então nada em `reservas` muda.
+- A página lê `veiculos` ao abrir (e acompanha alterações em tempo real) e guarda uma cópia em `localStorage` (`frotasefazrn_veiculos_v1`) como reserva. As opções dos filtros "Caracterizada" e "Propriedade" e o total de viaturas exibido no card "Frota de veículos" são calculados a partir desse cadastro. O campo `lotado` precisa ser um dos locais da lista `LOCAIS` do `index.html` para a viatura aparecer na busca de disponibilidade.
+- **Carga inicial:** no console do Firebase, crie o nó `veiculos` (botão **+** na linha da raiz, com nome `veiculos` e um valor provisório qualquer), depois clique no **⋮** da linha `veiculos` (**não** no da raiz) → **Importar JSON** e selecione `veiculos.json` (deste repositório). **Atenção:** nunca importe na raiz — isso substituiria `reservas` e `servidores`.
+- **Manutenção:** para incluir, alterar ou remover uma viatura, edite o nó `veiculos` no console do Firebase; não é preciso alterar o código nem fazer commit. Se a placa mudar, crie um novo nó com a nova placa (agendamentos antigos continuam apontando para a placa antiga).
+- **Regras:** ver o exemplo de regras na seção anterior, que já inclui `veiculos` como somente leitura.
 
 ## Tecnologias utilizadas
 
@@ -178,6 +193,7 @@ Não há framework de front-end (React, Vue etc.), bundler ou etapa de compilaç
 frotasefazrn/
 ├── index.html        # página única: HTML + CSS + JS embutidos
 ├── servidores.json   # carga inicial do cadastro de servidores (importar no nó "servidores" do Firebase)
+├── veiculos.json     # carga inicial do cadastro de veículos (importar no nó "veiculos" do Firebase)
 └── README.md         # este arquivo
 ```
 
