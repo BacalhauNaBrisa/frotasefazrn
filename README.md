@@ -30,7 +30,7 @@ Ao abrir a página, os cards "Agendamento", "Agendados" e "Frota de veículos" a
 
 1. Digite sua matrícula (7 dígitos); o campo só aceita números e formata automaticamente para `256.410-6` assim que os 7 dígitos são digitados.
 2. O botão **"Acessar"** só fica habilitado com os 7 dígitos preenchidos.
-3. Ao clicar, o sistema valida a matrícula contra a listagem de servidores cadastrada no `index.html`. Se não constar na lista, exibe **"Matrícula inválida."**. Se for válida:
+3. Ao clicar, o sistema valida a matrícula contra o cadastro de servidores guardado no Firebase (nó `servidores`, ver seção [Cadastro de servidores no Firebase](#cadastro-de-servidores-no-firebase)). Se não constar na lista, exibe **"Matrícula inválida."**. Se for válida:
    - o card **"Agendamento"** é desbloqueado e expandido normalmente;
    - o card **"Agendados"** é desbloqueado e expandido, mas mostrando **apenas os agendamentos feitos por essa matrícula**;
    - o card **"Frota de veículos"** permanece bloqueado.
@@ -38,7 +38,7 @@ Ao abrir a página, os cards "Agendamento", "Agendados" e "Frota de veículos" a
 
 Esse login não usa senha nem persiste entre sessões (um recarregamento da página exige nova identificação): ele serve apenas para personalizar o que cada servidor vê, não como mecanismo de segurança contra alguém que já tem acesso à página.
 
-**Gestores:** as matrículas cadastradas com `gestor: true` no array `SERVIDORES` do `index.html` (atualmente os responsáveis pela SUMAT) têm acesso ampliado — ao fazer login, tanto **"Agendados"** quanto **"Frota de veículos"** são desbloqueados e expandidos com todos os dados, sem filtro por matrícula. Qualquer card, uma vez desbloqueado, pode ser recolhido/expandido livremente clicando no título — a trava (cadeado) só existe antes do login e, para "Frota de veículos", também para usuários que não são gestores.
+**Gestores:** as matrículas cadastradas com `gestor: true` no nó `servidores` do Firebase (atualmente os responsáveis pela SUMAT) têm acesso ampliado — ao fazer login, tanto **"Agendados"** quanto **"Frota de veículos"** são desbloqueados e expandidos com todos os dados, sem filtro por matrícula. Qualquer card, uma vez desbloqueado, pode ser recolhido/expandido livremente clicando no título — a trava (cadeado) só existe antes do login e, para "Frota de veículos", também para usuários que não são gestores.
 
 ### 2. Agendamento
 
@@ -128,10 +128,34 @@ A barra de status acima do formulário de agendamento exibe **"Sincronizado com 
 - **8 locais**: Sede Sefaz, NIF, 1 URT, 2 URT, 3 URT, 5 URT, 6 URT e 7 URT.
 - **19 setores solicitantes**: SUMAT, SUMAT/NIF, SUCADI, SUFISE, SUSCOMEX, COFIS, CACE, SUDEFI, GS, Central de Veículos, COGEF, COTIC, 1 URT, 2 URT, 3 URT, 5 URT, 6 URT, 7 URT e COEF.
 - **3 finalidades**: Itinerância, Plantão e Visita Institucional.
-- **131 servidores** cadastrados por nome e matrícula, usados para validar o campo de matrícula no login, no agendamento e no cancelamento — a lista original de 48 foi ampliada com os 80 condutores da escala de auditores 24h da SUMAT. Duas matrículas (as dos responsáveis pela SUMAT) têm o campo `gestor: true`, dando acesso ampliado a "Agendados" e "Frota de veículos" (ver seção [Login](#1-login)).
+- **131 servidores** cadastrados no Firebase (nó `servidores`, por matrícula), usados para validar o campo de matrícula no login, no agendamento e no cancelamento — a lista original de 48 foi ampliada com os 80 condutores da escala de auditores 24h da SUMAT. Duas matrículas (as dos responsáveis pela SUMAT) têm o campo `gestor: true`, dando acesso ampliado a "Agendados" e "Frota de veículos" (ver seção [Login](#1-login)).
 - **56 viaturas** da frota, com veículo, placa, caracterização, local de lotação e propriedade (própria/alugada). No campo "Caracterizada", o valor `DESCARACTERIZADA` é exibido como `--` e `DESCARACTERIZADA ADESIVO GOV/RN` é exibido como `ADESIVO GOV/RN`, em qualquer tabela ou filtro da página; os dados internos continuam com o valor original.
 
-Qualquer alteração nessas listas (troca de servidor, movimentação de viatura entre locais etc.) exige editar diretamente os arrays correspondentes (`LOCAIS`, `SETORES`, `FINALIDADES`, `SERVIDORES`, `VEICULOS`) no início do `<script>` do `index.html`.
+Qualquer alteração nessas listas (troca de servidor, movimentação de viatura entre locais etc.) exige editar diretamente os arrays correspondentes (os servidores não ficam mais no `index.html`: ver seção abaixo) (`LOCAIS`, `SETORES`, `FINALIDADES`, `VEICULOS`) no início do `<script>` do `index.html`.
+
+## Cadastro de servidores no Firebase
+
+Nomes, matrículas e perfil (gestor ou não) **não ficam mais no `index.html`**: ficam no Firebase Realtime Database, no caminho `servidores/<matrícula>`, separado de `reservas` (onde ficam os agendamentos). Formato de cada nó:
+
+```json
+"2560330": { "nome": "Daniel", "gestor": true }
+"2564033": { "nome": "Alexandre" }
+```
+
+- A matrícula (7 dígitos, com zeros à esquerda quando houver) é a chave do nó; `gestor: true` só é gravado para gestores.
+- A página lê `servidores` ao abrir (e acompanha alterações em tempo real) e guarda uma cópia em `localStorage` (`frotasefazrn_servidores_v1`) como reserva, usada se o Firebase estiver indisponível. Enquanto o cadastro não carrega, o login exibe "Cadastro de servidores ainda não carregado".
+- **Carga inicial:** no console do Firebase, abra **Realtime Database → Dados**, clique no **⋮** do nó raiz → **Importar JSON**, selecione `servidores.json` (deste repositório) e, ao importar, escolha o local `servidores`. Se a opção de importar só estiver disponível no nó raiz, crie antes o nó `servidores` vazio e importe nele. **Atenção:** nunca importe na raiz — isso substituiria `reservas`.
+- **Manutenção:** para incluir, renomear ou remover alguém, edite diretamente o nó `servidores` no console do Firebase; não é preciso alterar o código nem fazer commit. Para tornar alguém gestor, adicione `"gestor": true`.
+- **Regras (recomendado):** como `servidores` só é lido pela página, as regras podem deixá-lo somente leitura:
+  ```json
+  {
+    "rules": {
+      "reservas":   { ".read": true, ".write": true },
+      "servidores": { ".read": true, ".write": false }
+    }
+  }
+  ```
+  Com isso, só quem acessa o console do Firebase (autenticado) consegue alterar o cadastro ou o perfil de gestor. Teste a regra no simulador do console antes de publicar.
 
 ## Tecnologias utilizadas
 
@@ -150,8 +174,9 @@ Não há framework de front-end (React, Vue etc.), bundler ou etapa de compilaç
 
 ```
 frotasefazrn/
-├── index.html   # página única: HTML + CSS + JS embutidos
-└── README.md    # este arquivo
+├── index.html        # página única: HTML + CSS + JS embutidos
+├── servidores.json   # carga inicial do cadastro de servidores (importar no nó "servidores" do Firebase)
+└── README.md         # este arquivo
 ```
 
 ## Aviso legal

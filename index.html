@@ -821,143 +821,38 @@ var SETORES = ["SUMAT","SUMAT/NIF","SUCADI","SUFISE","SUSCOMEX","COFIS","CACE","
 
 var FINALIDADES = ["Itinerância","Plantão","Visita Institucional"];
 
-var SERVIDORES = [
-	{ nome:"Alexandre",        matricula:"2564033" },
-	{ nome:"Alinne",           matricula:"2562316" },
-	{ nome:"Amanda Sousa",     matricula:"2564025" },
-	{ nome:"André",            matricula:"2564670" },
-	{ nome:"Thales",           matricula:"2564807" },
-	{ nome:"Arthur",           matricula:"2564475" },
-	{ nome:"Carlos",           matricula:"2563959" },
-	{ nome:"Caroline",         matricula:"2562820" },
-	{ nome:"Daniel",           matricula:"2560330", gestor:true },
-	{ nome:"Danielle",         matricula:"2564092" },
-	{ nome:"Estevam",          matricula:"2564840" },
-	{ nome:"Fabiano",          matricula:"2564521" },
-	{ nome:"Fellipe",          matricula:"2562448" },
-	{ nome:"Fernando Diógenes Fernandes Júnior",matricula:"1945289", gestor:true },
-	{ nome:"Braga",            matricula:"2562774" },
-	{ nome:"Girlian",          matricula:"2563932" },
-	{ nome:"Gustavo",          matricula:"2564106" },
-	{ nome:"Jean",             matricula:"2564432" },
-	{ nome:"João",             matricula:"2563843" },
-	{ nome:"Jônatas",          matricula:"2564394" },
-	{ nome:"Jorge",            matricula:"2568217" },
-	{ nome:"Francisco",        matricula:"2564459" },
-	{ nome:"Rodolfo",          matricula:"2562987" },
-	{ nome:"Júlio",            matricula:"2562464" },
-	{ nome:"Larissa",          matricula:"2562960" },
-	{ nome:"Leandro",          matricula:"2562235" },
-	{ nome:"Leonardo",         matricula:"2563835" },
-	{ nome:"Lewi",             matricula:"2562855" },
-	{ nome:"Lucas Simões",     matricula:"2562685" },
-	{ nome:"Lucas Nascimento", matricula:"2564084" },
-	{ nome:"Lucas Vidigal",    matricula:"2564009" },
-	{ nome:"Marcelo",          matricula:"2564823" },
-	{ nome:"Marco",            matricula:"2564637" },
-	{ nome:"Marcos",           matricula:"2289709" },
-	{ nome:"Marila",           matricula:"2564297" },
-	{ nome:"Mateus",           matricula:"2562162" },
-	{ nome:"Matheus Welter",   matricula:"2563916" },
-	{ nome:"Matheus Matos",    matricula:"2564017" },
-	{ nome:"Mozart",           matricula:"2562308" },
-	{ nome:"Rafael",           matricula:"2562650" },
-	{ nome:"Roberto",          matricula:"2562324" },
-	{ nome:"Romilson",         matricula:"2564488" },
-	{ nome:"Silvio",           matricula:"2562766" },
-	{ nome:"Tacio",            matricula:"2564440" },
-	{ nome:"Tarcisio",         matricula:"2564041" },
-	{ nome:"Thiago Bastos",    matricula:"2563800" },
-	{ nome:"Thiago Lima",      matricula:"2562278" },
-	{ nome:"Walber",           matricula:"2564424" },
-
-	// Servidores adicionados a partir da listagem "solicitantes.xlsx" (condutores)
-	{ nome:"Alessandre Nunes Ribeiro",               matricula:"1909096" },
-	{ nome:"Alexandre Magno Rocha Azevedo",          matricula:"2014505" },
-	{ nome:"Antônio Alves Severiano",                matricula:"2036354" },
-	{ nome:"Antônio Ferreira de Lima Júnior",        matricula:"1602268" },
-	{ nome:"Carlos Alberto Pereira de Melo",         matricula:"0089125" },
-	{ nome:"Claudener Renato Fernandes",             matricula:"0121657" },
-	{ nome:"Clayton Gil Maia de Almeida",            matricula:"2039214" },
-	{ nome:"Cléciton George Moura da Silva",         matricula:"1909002" },
-	{ nome:"Cosme Alves Ribeiro",                    matricula:"0825743" },
-	{ nome:"Denise Leite de Assis",                  matricula:"0964565" },
-	{ nome:"Edson Moreira da Silva",                 matricula:"1645730" },
-	{ nome:"Emerson Alves Silva",                    matricula:"1945327" },
-	{ nome:"Felinto de Paiva Gadelha Neto",          matricula:"1582941" },
-	{ nome:"Francisco Canindé Benedito de Almeida",  matricula:"0766690" },
-	{ nome:"Francisco Cesário da Costa Filho",       matricula:"1603914" },
-	{ nome:"Francisco da Chagas Tavares",            matricula:"1602527" },
-	{ nome:"Francisco Edson de Medeiros Silva",      matricula:"2011891" },
-	{ nome:"Francisco Eliésio Granja",               matricula:"2011930" },
-	{ nome:"Francisco Ermano Barbosa Lima",          matricula:"1537130" },
-	{ nome:"Francisco Evangelista Neto",             matricula:"0870854" },
-	{ nome:"Freud Ferreira de Morais",               matricula:"1601482" },
-	{ nome:"Genibaldo de Barros",                    matricula:"1601504" },
-	{ nome:"Gil Fábio Aquino de Oliveira",           matricula:"2567733" },
-	{ nome:"Henrique Ricardo Freitas de Souza",      matricula:"0963224" },
-	{ nome:"Hermano Augusto Aleixo de Lucena",       matricula:"1945360" },
-	{ nome:"Hildemar Câmara de Araújo",              matricula:"0880191" },
-	{ nome:"Isabel Christina Santos Napoli",         matricula:"2048523" },
-	{ nome:"Ítalo de Almeida Queiroga",              matricula:"2068168" },
-	{ nome:"Ivan Loiola Citó Filho",                 matricula:"1909525" },
-	{ nome:"Ivanaldo Batista de Andrade",            matricula:"0884596" },
-	{ nome:"João Manoel dos Santos",                 matricula:"0968307" },
-	{ nome:"Jonas Machado Coutinho",                 matricula:"1909215" },
-	{ nome:"Jorge Luiz Porto Gurgel",                matricula:"1586335" },
-	{ nome:"José Leão de Brito",                     matricula:"0916668" },
-	{ nome:"José Lenilson Nunes Diniz",              matricula:"2011824" },
-	{ nome:"José Luiz da Silva Júnior",              matricula:"1530208" },
-	{ nome:"José Luiz Fernandes",                    matricula:"0994553" },
-	{ nome:"José Rubens Araújo Lima",                matricula:"1539817" },
-	{ nome:"Joseph Charles Gonçalves Alves",         matricula:"1525913" },
-	{ nome:"Juarez Gomes de Brito",                  matricula:"1947125" },
-	{ nome:"Juvino Eduardo Neto",                    matricula:"1605798" },
-	{ nome:"Lenilton Moura Vasconcelos",             matricula:"1601679" },
-	{ nome:"Levany de Freitas Júnior",               matricula:"1602896" },
-	{ nome:"Lilian Regina de Souza Marinho",         matricula:"2011905" },
-	{ nome:"Lívio Sampaio Colares",                  matricula:"1515519" },
-	{ nome:"Luciano Fortes de Castro",               matricula:"1909436" },
-	{ nome:"Luciano Pessoa de Souza",                matricula:"1601717" },
-	{ nome:"Luiz Eduardo do Nascimento Farias",      matricula:"1945874" },
-	{ nome:"Maicon Evandro de Oliveira Cruz",        matricula:"1909274" },
-	{ nome:"Manoel Sabino Filho",                    matricula:"1530755" },
-	{ nome:"Manoel Temóteo Dantas",                  matricula:"0963003" },
-	{ nome:"Marcelo Lima de Morais",                 matricula:"1681257" },
-	{ nome:"Mável Adriano Pinheiro de Lima",         matricula:"1601865" },
-	{ nome:"Miciel Brito de Melo",                   matricula:"0840157" },
-	{ nome:"Paulo Roberto da Costa Elias",           matricula:"1603299" },
-	{ nome:"Radir Carneiro de Oliveira",             matricula:"1770322" },
-	{ nome:"Rainério Lopes Costa",                   matricula:"0379662" },
-	{ nome:"Ramises Ramman Macedo Alves",            matricula:"0976105" },
-	{ nome:"Rênio Palmeira de Araújo",               matricula:"0088013" },
-	{ nome:"Robério Marques Barreto",                matricula:"2013592" },
-	{ nome:"Robson Gonzaga Gê",                      matricula:"2039346" },
-	{ nome:"Sadraque Manoel de Sousa",               matricula:"1681265" },
-	{ nome:"Sideoni Jeferson da Silva Lins",         matricula:"2508273" },
-	{ nome:"Uilton Pereira Costa",                   matricula:"1600931" },
-	{ nome:"Williams Gomes da Rocha",                matricula:"1604880" },
-	{ nome:"HERLON EMANOEL RAMOS PAIVA",             matricula:"1530470" },
-	{ nome:"ADRIANA ASSUNÇÃO SILVA",                 matricula:"1630482" },
-	{ nome:"MARCELO MONTEIRO E MONTEIRO",            matricula:"1908871" },
-	{ nome:"ADENILTON PINHEIRO BARROS",              matricula:"1515551" },
-	{ nome:"FRANCISCO JORGE SILVEIRA RODRIGUES",     matricula:"1586718" },
-	{ nome:"ISRAEL PAULINO DA SILVA JUNIOR",         matricula:"1531794" },
-	{ nome:"FRANCISCO MÁRCIO BEZERRA CAVALCANTI",    matricula:"1910051" },
-	{ nome:"VALERIANO OTAVIANO DE ALMEIDA",          matricula:"1945386" },
-	{ nome:"FRANCISCO HERMENELUCE VASCO FERNANDES",  matricula:"1533916" },
-	{ nome:"LEONOR LAURENTINA VIEIRA PINHEIRO PITA", matricula:"1225677" },
-	{ nome:"GENIVALDO DE OLIVEIRA DUTRA",            matricula:"1602594" },
-	{ nome:"JOSÉ RENATO PINHEIRO CAVALCANTE",        matricula:"2213745" },
-	{ nome:"LINOMÉRICO ALVES RODRIGUES",             matricula:"1961721" },
-	{ nome:"FERNANDO LUIZ BORGES DA SILVA",          matricula:"1682075" },
-	{ nome:"ROBERTO AQUINO DE ARAUJO",               matricula:"1603337" },
-	{ nome:"Edvan de Freitas Melo",                  matricula:"1581252" },
-	{ nome:"Gelson Maia da Costa",                    matricula:"1601490" },
-	{ nome:"Nilson Diniz Correia da Costa",           matricula:"1601903" },
-];
+// O cadastro de servidores (nome, matrícula e perfil de gestor) NÃO fica mais neste arquivo:
+// é lido do Firebase Realtime Database, no caminho "servidores/<matrícula>"
+// (ex.: servidores/2560330 = { "nome": "...", "gestor": true }). Uma cópia fica em
+// localStorage como reserva, para o caso de o Firebase estar indisponível.
+var SERVIDORES_PATH = 'servidores'; // não altere: caminho usado dentro do banco de dados
+var SERVIDORES_CACHE_KEY = 'frotasefazrn_servidores_v1';
 var SERVIDOR_BY_MAT = {};
-SERVIDORES.forEach(function(s){ SERVIDOR_BY_MAT[s.matricula] = s; });
+var servidoresCarregados = false;
+
+function definirServidores(mapa) {
+	var novo = {};
+	Object.keys(mapa || {}).forEach(function(mat){
+		var v = mapa[mat];
+		if (v && typeof v.nome === 'string' && /^\d{7}$/.test(mat)) {
+			novo[mat] = { nome: v.nome, matricula: mat, gestor: v.gestor === true };
+		}
+	});
+	SERVIDOR_BY_MAT = novo;
+	servidoresCarregados = Object.keys(novo).length > 0;
+}
+
+function carregarServidoresCache() {
+	try {
+		var raw = localStorage.getItem(SERVIDORES_CACHE_KEY);
+		if (raw) definirServidores(JSON.parse(raw));
+	} catch (e) { /* sem cache disponível */ }
+}
+
+function salvarServidoresCache(mapa) {
+	try { localStorage.setItem(SERVIDORES_CACHE_KEY, JSON.stringify(mapa)); }
+	catch (e) { /* ignora: o cache é apenas uma reserva */ }
+}
 
 var VEICULOS = [
 	{ veiculo:"CAMINHÃO",                              placa:"OWC-0742", caracterizada:"CARACTERIZADA",                        lotado:"Sede Sefaz", propriedade:"PRÓPRIA" },
@@ -1090,6 +985,33 @@ function renderTudo() {
 	renderAgendados();
 }
 
+// Lê o cadastro de servidores do Firebase (somente leitura) e mantém uma cópia em cache.
+function iniciarSincronizacaoServidores() {
+	db.ref(SERVIDORES_PATH).on('value', function(snapshot) {
+		var mapa = {};
+		snapshot.forEach(function(filho){ mapa[filho.key] = filho.val(); });
+		if (Object.keys(mapa).length === 0) return; // nó vazio: mantém o cache, se houver
+		definirServidores(mapa);
+		salvarServidoresCache(mapa);
+		aoAtualizarServidores();
+	}, function(erro) {
+		console.error('Erro ao ler o cadastro de servidores:', erro);
+	});
+}
+
+function aoAtualizarServidores() {
+	if ($('#inpMatricula').length) formatarMatriculaInput();
+	atualizarEstadoBotao();
+	if (currentUser) {
+		var s = SERVIDOR_BY_MAT[currentUser.matricula];
+		if (!s) { tentarLogout(); return; }
+		var mudou = (s.gestor !== currentUser.gestor);
+		currentUser.nome = s.nome;
+		currentUser.gestor = s.gestor;
+		if (mudou) aplicarEstadoPosLogin();
+	}
+}
+
 function iniciarSincronizacao() {
 	if (!configuracaoFirebaseValida() || typeof firebase === 'undefined') {
 		firebaseAtivo = false;
@@ -1110,6 +1032,8 @@ function iniciarSincronizacao() {
 		renderTudo();
 		return;
 	}
+
+	iniciarSincronizacaoServidores();
 
 	db.ref(FIREBASE_PATH).on('value', function(snapshot) {
 		firebaseAtivo = true;
@@ -1241,9 +1165,9 @@ function gerarCodigoAgendamento(matriculaDigitos, momentoCriacao) {
 
 // ======================= CONTROLE DE ACESSO (LOGIN) =======================
 //
-// Login apenas identifica o servidor (matrícula validada contra SERVIDORES) para
+// Login apenas identifica o servidor (matrícula validada contra o cadastro "servidores" do Firebase) para
 // decidir o que fica visível na página; não é uma autenticação com senha. Os
-// gestores (campo "gestor: true" no cadastro do servidor, em SERVIDORES) são os
+// gestores (campo "gestor: true" no cadastro do servidor, em "servidores/<matrícula>" no Firebase) são os
 // únicos que veem "Agendados" e "Frota de veículos" com todos os dados; os demais
 // veem "Agendados" filtrado apenas pelos próprios agendamentos, e "Frota de
 // veículos" permanece bloqueado.
@@ -1300,7 +1224,9 @@ function tentarLogin() {
 
 	var servidor = SERVIDOR_BY_MAT[digitos];
 	if (!servidor) {
-		$('#msgLoginMatricula').text('Matrícula inválida.');
+		$('#msgLoginMatricula').text(servidoresCarregados
+			? 'Matrícula inválida.'
+			: 'Cadastro de servidores ainda não carregado. Aguarde alguns segundos e tente novamente.');
 		return;
 	}
 
@@ -1365,6 +1291,9 @@ function formatarMatriculaInput() {
 	} else if (SERVIDOR_BY_MAT[digitos]) {
 		$('#inpMatricula').removeClass('invalid');
 		$msg.text('Servidor: ' + SERVIDOR_BY_MAT[digitos].nome).addClass('ok');
+	} else if (!servidoresCarregados) {
+		$('#inpMatricula').removeClass('invalid');
+		$msg.text('Carregando o cadastro de servidores…').removeClass('ok');
 	} else {
 		$('#inpMatricula').addClass('invalid');
 		$msg.text('Matrícula inválida: não consta na listagem de servidores.').removeClass('ok');
@@ -2026,6 +1955,7 @@ $(document).ready(function(){
 		sortPadrao: 'retiradaFmt'
 	});
 
+	carregarServidoresCache();
 	iniciarSincronizacao();
 
 	$('#inpLoginMatricula').on('input', formatarMatriculaLoginInput);
