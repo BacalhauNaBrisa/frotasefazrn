@@ -859,8 +859,8 @@ footer a{color:var(--ink-600);}
 				<input type="number" id="devInpKmIni" min="0" step="1"/>
 			</div>
 			<div class="field">
-				<label for="devInpKmFim">Quilometragem final (km)</label>
-				<input type="number" id="devInpKmFim" min="0" step="1"/>
+				<label for="devInpKmFim">Quilometragem final (km) *</label>
+				<input type="number" id="devInpKmFim" min="0" step="1" required/>
 			</div>
 		</div>
 		<div class="field" style="margin-top:12px;">
@@ -923,7 +923,9 @@ function salvarServidoresCache(mapa) {
 // O cadastro de veículos (veículo, placa, caracterização, local de lotação e propriedade) NÃO fica
 // mais neste arquivo: é lido do Firebase Realtime Database, no caminho "veiculos/<placa>"
 // (ex.: veiculos/OWC-0742 = { "veiculo": "CAMINHÃO", "caracterizada": "CARACTERIZADA",
-// "lotado": "Sede Sefaz", "propriedade": "PRÓPRIA" }). Uma cópia fica em localStorage como reserva.
+// "lotado": "Sede Sefaz", "propriedade": "PRÓPRIA", "kmFinal": 12345 }). O atributo "kmFinal" (última
+// quilometragem final registrada em uma devolução manual) é criado/atualizado pelo próprio sistema.
+// Uma cópia fica em localStorage como reserva.
 var VEICULOS_PATH = 'veiculos'; // não altere: caminho usado dentro do banco de dados
 var VEICULOS_CACHE_KEY = 'frotasefazrn_veiculos_v1';
 var VEICULOS = [];
@@ -956,7 +958,8 @@ function definirVeiculos(mapa) {
 			placa: placa,
 			caracterizada: limparTextoCadastro(v.caracterizada),
 			lotado: limparTextoCadastro(v.lotado),
-			propriedade: limparTextoCadastro(v.propriedade)
+			propriedade: limparTextoCadastro(v.propriedade),
+			kmFinal: (typeof v.kmFinal === 'number' && isFinite(v.kmFinal) && v.kmFinal >= 0) ? v.kmFinal : null
 		});
 	});
 	VEICULOS = lista;
@@ -1156,6 +1159,51 @@ function atualizarCamposReserva(id, patch, callback) {
 			saveStateLocal();
 			renderTudo();
 		}
+		callback(true);
+	}
+}
+
+// Última quilometragem final conhecida da viatura: o atributo "kmFinal" do cadastro no Firebase e,
+// se ainda não houver, a quilometragem final da devolução manual mais recente já registrada para a placa.
+function ultimaKmFinalDaPlaca(placa) {
+	var v = VEICULO_BY_PLACA[placa];
+	if (v && v.kmFinal !== null && v.kmFinal !== undefined) return v.kmFinal;
+	var melhor = null, melhorData = -Infinity;
+	Object.keys(reservas).forEach(function(id){
+		var r = reservas[id];
+		if (!r || r.placa !== placa || !r.devolucaoManual || typeof r.kmFinal !== 'number') return;
+		var t = new Date(r.devolucaoManual).getTime();
+		if (t > melhorData) { melhorData = t; melhor = r.kmFinal; }
+	});
+	return melhor;
+}
+
+// Grava a devolução manual e, na mesma operação (atômica), a quilometragem final no cadastro do veículo.
+function registrarDevolucaoComKm(id, patch, placa, kmFinal, callback) {
+	var veiculoCadastrado = !!VEICULO_BY_PLACA[placa];
+	if (firebaseAtivo && db) {
+		var updates = {};
+		Object.keys(patch).forEach(function(k){ updates[FIREBASE_PATH + '/' + id + '/' + k] = patch[k]; });
+		if (veiculoCadastrado) updates[VEICULOS_PATH + '/' + placa + '/kmFinal'] = kmFinal;
+		db.ref().update(updates, function(erro) {
+			if (erro) console.error('Erro ao registrar devolução:', erro);
+			callback(!erro);
+		});
+	} else {
+		if (reservas[id]) {
+			Object.keys(patch).forEach(function(k){ reservas[id][k] = patch[k]; });
+			saveStateLocal();
+		}
+		if (veiculoCadastrado) {
+			VEICULO_BY_PLACA[placa].kmFinal = kmFinal;
+			var mapa = {};
+			VEICULOS.forEach(function(v){
+				mapa[v.placa] = { veiculo: v.veiculo, caracterizada: v.caracterizada, lotado: v.lotado, propriedade: v.propriedade };
+				if (v.kmFinal !== null) mapa[v.placa].kmFinal = v.kmFinal;
+			});
+			salvarVeiculosCache(mapa);
+		}
+		renderTudo();
 		callback(true);
 	}
 }
@@ -1592,12 +1640,24 @@ function abrirModalDevolucao(id) {
 	$('#devInpHora').val(r.devolucaoManual ? new Intl.DateTimeFormat('pt-BR', {
 		timeZone: 'America/Recife', hour: '2-digit', minute: '2-digit', hour12: false
 	}).format(new Date(r.devolucaoManual)) : '');
-	$('#devInpKmIni').val(r.kmInicial !== undefined && r.kmInicial !== null ? r.kmInicial : '');
+	// Quilometragem inicial: preenchida automaticamente com a última quilometragem final registrada para a viatura.
+	var kmAnterior = ultimaKmFinalDaPlaca(r.placa);
+	$('#devInpKmIni').val(kmAnterior !== null ? kmAnterior : (r.kmInicial !== undefined && r.kmInicial !== null ? r.kmInicial : ''));
 	$('#devInpKmFim').val(r.kmFinal !== undefined && r.kmFinal !== null ? r.kmFinal : '');
 	$('#devInpObs').val(r.observacao || '');
 	$('#devolucaoMsg').text('');
-	$('#devolucaoConfirmar').prop('disabled', false);
+	atualizarEstadoBotaoDevolucao();
 	$('#modalDevolucao').removeClass('hidden');
+}
+
+// "Registrar devolução" só fica habilitado com a quilometragem final preenchida (número inteiro >= 0).
+function kmFinalDevolucaoValida() {
+	var v = $('#devInpKmFim').val();
+	return v !== '' && /^\d+$/.test(String(v).trim());
+}
+
+function atualizarEstadoBotaoDevolucao() {
+	$('#devolucaoConfirmar').prop('disabled', !kmFinalDevolucaoValida());
 }
 
 function fecharModalDevolucao() {
@@ -1620,19 +1680,29 @@ function confirmarDevolucaoManual() {
 		return;
 	}
 
+	if (!kmFinalDevolucaoValida()) {
+		$('#devolucaoMsg').text('Informe a quilometragem final (km), somente números.');
+		return;
+	}
 	var kmIniVal = $('#devInpKmIni').val();
-	var kmFimVal = $('#devInpKmFim').val();
+	var kmFinal = Number($('#devInpKmFim').val());
+	var kmInicial = kmIniVal !== '' ? Number(kmIniVal) : null;
+	if (kmInicial !== null && kmFinal < kmInicial) {
+		$('#devolucaoMsg').text('A quilometragem final não pode ser menor que a quilometragem inicial (' + kmInicial + ' km).');
+		return;
+	}
 	var patch = {
 		devolucaoManual: dataHora.toISOString(),
-		kmInicial: kmIniVal !== '' ? Number(kmIniVal) : null,
-		kmFinal: kmFimVal !== '' ? Number(kmFimVal) : null,
+		kmInicial: kmInicial,
+		kmFinal: kmFinal,
 		observacao: $('#devInpObs').val() || ''
 	};
 
 	var idAlvo = idParaDevolucao;
+	var placaAlvo = r.placa;
 	$('#devolucaoConfirmar').prop('disabled', true);
-	atualizarCamposReserva(idAlvo, patch, function(sucesso){
-		$('#devolucaoConfirmar').prop('disabled', false);
+	registrarDevolucaoComKm(idAlvo, patch, placaAlvo, kmFinal, function(sucesso){
+		atualizarEstadoBotaoDevolucao();
 		if (sucesso) {
 			fecharModalDevolucao();
 		} else {
@@ -2260,6 +2330,7 @@ $(document).ready(function(){
 	});
 	$('#devolucaoFechar').on('click', fecharModalDevolucao);
 	$('#devolucaoConfirmar').on('click', confirmarDevolucaoManual);
+	$('#devInpKmFim').on('input', atualizarEstadoBotaoDevolucao);
 
 	$('#btnExportAgendados').on('click', function(){
 		tabelaAgendados.exportarXlsx(nomeArquivoRelatorio('agendados_frotasefazrn'));

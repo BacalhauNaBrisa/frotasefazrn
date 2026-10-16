@@ -65,7 +65,9 @@ O campo **status** desse módulo é calculado em tempo real e é diferente do st
 
 **Cancelamento:** para cancelar um agendamento ainda `AGENDADO` ou `EM USO`, clique no ✕ vermelho da coluna "Cancelar"; o sistema pede a matrícula do responsável pelo agendamento original e só libera a confirmação quando ela confere. Agendamentos `EXPIRADO` ou já `CANCELADO` não exibem o botão de cancelar. O cancelamento não apaga o registro: o código do agendamento permanece gravado, inclusive para efeito do limite diário de 99 agendamentos por matrícula (ver abaixo), e a data/hora em que o cancelamento ocorreu passa a ser exibida na coluna "Data/hora de cancelamento".
 
-**Registro manual de devolução:** a devolução automática do veículo continua ocorrendo pela hora de devolução prevista na reserva. Além disso, enquanto o agendamento estiver `EM USO` ou já `EXPIRADO` e nenhuma devolução manual tiver sido registrada, a coluna "Registrar devolução" exibe um botão azul que abre um modal para dar baixa real na devolução: data/hora efetiva (obrigatoriamente posterior à retirada), quilometragem inicial, quilometragem final e uma observação em texto livre. Ao confirmar, a data/hora informada aparece na coluna "Data/hora de devolução (baixa manual)" e a observação na coluna "Observação"; o status do agendamento passa imediatamente para `EXPIRADO` (mesmo que a hora de devolução prevista ainda não tenha chegado) e a viatura correspondente volta a aparecer como `DISPONÍVEL` no dashboard de frota; o botão então deixa de ser exibido para aquele agendamento. Enquanto a baixa manual não é feita, o botão permanece disponível mesmo depois que o sistema já tiver marcado o agendamento como `EXPIRADO` pelo horário previsto.
+**Registro manual de devolução:** a devolução automática do veículo continua ocorrendo pela hora de devolução prevista na reserva. Além disso, enquanto o agendamento estiver `EM USO` ou já `EXPIRADO` e nenhuma devolução manual tiver sido registrada, a coluna "Registrar devolução" exibe um botão azul que abre um modal para dar baixa real na devolução: data/hora efetiva (obrigatoriamente posterior à retirada), quilometragem inicial, quilometragem final e uma observação em texto livre. Ao confirmar, a data/hora informada aparece na coluna "Data/hora de devolução (baixa manual)" e a observação na coluna "Observação"; o status do agendamento passa imediatamente para `EXPIRADO` (mesmo que a hora de devolução prevista ainda não tenha chegado) e a viatura correspondente volta a aparecer como `DISPONÍVEL` no dashboard de frota; o botão então deixa de ser exibido para aquele agendamento.
+
+**Quilometragem:** a **quilometragem final (km)** é obrigatória — o botão "Registrar devolução" fica desabilitado enquanto ela não for preenchida com um número inteiro (e ela não pode ser menor que a quilometragem inicial). Ao registrar, a quilometragem final é gravada tanto no agendamento quanto no cadastro da viatura (atributo `kmFinal` em `veiculos/<placa>`), na mesma operação. Na próxima devolução manual de **qualquer agendamento da mesma viatura**, o campo "Quilometragem inicial" já vem preenchido com essa última quilometragem final registrada (e continua editável). Para viaturas que ainda não têm `kmFinal` no cadastro, é usada a quilometragem final da devolução manual mais recente já registrada para a placa, se houver. Enquanto a baixa manual não é feita, o botão permanece disponível mesmo depois que o sistema já tiver marcado o agendamento como `EXPIRADO` pelo horário previsto.
 
 ### 4. Frota de veículos
 
@@ -154,7 +156,12 @@ Nomes, matrículas e perfil (gestor ou não) **não ficam mais no `index.html`**
     "rules": {
       "reservas":   { ".read": true, ".write": true },
       "servidores": { ".read": true, ".write": false },
-      "veiculos":   { ".read": true, ".write": false }
+      "veiculos": {
+        ".read": true,
+        "$placa": {
+          "kmFinal": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" }
+        }
+      }
     }
   }
   ```
@@ -172,7 +179,8 @@ Os dados das viaturas (veículo, placa, caracterização, local de lotação e p
 - A página lê `veiculos` ao abrir (e acompanha alterações em tempo real) e guarda uma cópia em `localStorage` (`frotasefazrn_veiculos_v1`) como reserva. As opções dos filtros "Caracterizada" e "Propriedade" e o total de viaturas exibido no card "Frota de veículos" são calculados a partir desse cadastro. O campo `lotado` precisa ser um dos locais da lista `LOCAIS` do `index.html` para a viatura aparecer na busca de disponibilidade.
 - **Carga inicial:** no console do Firebase, crie o nó `veiculos` (botão **+** na linha da raiz, com nome `veiculos` e um valor provisório qualquer), depois clique no **⋮** da linha `veiculos` (**não** no da raiz) → **Importar JSON** e selecione `veiculos.json` (deste repositório). **Atenção:** nunca importe na raiz — isso substituiria `reservas` e `servidores`.
 - **Manutenção:** para incluir, alterar ou remover uma viatura, edite o nó `veiculos` no console do Firebase; não é preciso alterar o código nem fazer commit. Se a placa mudar, crie um novo nó com a nova placa (agendamentos antigos continuam apontando para a placa antiga).
-- **Regras:** ver o exemplo de regras na seção anterior, que já inclui `veiculos` como somente leitura.
+- **Quilometragem final (`kmFinal`):** atributo numérico de cada viatura, criado/atualizado automaticamente pelo sistema a cada devolução manual (não precisa constar no `veiculos.json`; o importado inicialmente não o traz). **Se importar o `veiculos.json` de novo, o `kmFinal` já gravado nas viaturas é apagado.**
+- **Regras:** ver o exemplo de regras na seção anterior: `veiculos` fica somente leitura, exceto o campo `kmFinal`, que precisa continuar com escrita liberada (somente números maiores ou iguais a zero) para que o registro de devolução funcione.
 
 ## Tecnologias utilizadas
 
